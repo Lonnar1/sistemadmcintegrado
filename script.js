@@ -11426,16 +11426,14 @@ window.diagnosticarLocalStorage = function () {
   const personagens = localStorage.getItem("personagens");
   const backup = localStorage.getItem("personagens_backup");
 
-  const resumo = (json) => {
-    if (!json) return "vazio/inexistente";
-    try {
-      const arr = JSON.parse(json);
-      if (!Array.isArray(arr)) return "não é uma lista";
-      return `${arr.length} ficha(s): ` + arr.map(f => f.nome || "sem nome").join(", ");
-    } catch {
-      return "erro ao ler";
-    }
-  };
+  const texto = "personagens (bruto):\n" + (personagens || "null") +
+    "\n\n\npersonagens_backup (bruto):\n" + (backup || "null");
+
+  document.getElementById("popup-titulo").textContent = "Diagnóstico completo";
+  document.getElementById("popup-texto").innerHTML =
+    `<textarea readonly style="width:100%;height:300px;font-size:10px;">${texto.replace(/</g, "&lt;")}</textarea>`;
+  document.getElementById("popup").style.display = "flex";
+};
 
   alert(
     "personagens: " + resumo(personagens) +
