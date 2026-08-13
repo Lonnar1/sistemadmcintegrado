@@ -11421,6 +11421,28 @@ function devilEstilo() {
 }
 
 // ===== TEMPORÁRIO: recuperar fichas do localStorage manualmente =====
+
+window.diagnosticarLocalStorage = function () {
+  const personagens = localStorage.getItem("personagens");
+  const backup = localStorage.getItem("personagens_backup");
+
+  const resumo = (json) => {
+    if (!json) return "vazio/inexistente";
+    try {
+      const arr = JSON.parse(json);
+      if (!Array.isArray(arr)) return "não é uma lista";
+      return `${arr.length} ficha(s): ` + arr.map(f => f.nome || "sem nome").join(", ");
+    } catch {
+      return "erro ao ler";
+    }
+  };
+
+  alert(
+    "personagens: " + resumo(personagens) +
+    "\n\npersonagens_backup: " + resumo(backup)
+  );
+};
+
 window.forcarRecuperarFichas = async function () {
   const fichasLocais = JSON.parse(localStorage.getItem("personagens")) || [];
 
