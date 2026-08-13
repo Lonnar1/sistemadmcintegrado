@@ -11419,3 +11419,26 @@ function devilEstilo() {
     bloqueioDevilEstilo = false;
   }, 100);
 }
+
+// ===== TEMPORÁRIO: recuperar fichas do localStorage manualmente =====
+window.forcarRecuperarFichas = async function () {
+  const fichasLocais = JSON.parse(localStorage.getItem("personagens")) || [];
+
+  if (fichasLocais.length === 0) {
+    alertBonito("Não achei nenhuma ficha salva neste navegador/aparelho.");
+    return;
+  }
+
+  const confirmar = await confirmBonito(
+    `Encontrei ${fichasLocais.length} ficha(s) neste aparelho. Deseja vincular à sua conta?`
+  );
+
+  if (!confirmar) return;
+
+  personagens = fichasLocais;
+  window.personagens = personagens;
+
+  await salvarFichasNaNuvem();
+
+  alertBonito("Fichas vinculadas com sucesso!");
+};
