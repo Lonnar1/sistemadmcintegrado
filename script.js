@@ -896,6 +896,7 @@ function getIconeTipo(tipo) {
   if (t.includes("gelo")) return "❄️";
   if (t.includes("agua")) return "💧";
   if (t.includes("raio")) return "⚡";
+  if (t.includes("cura")) return "🩹";
   if (t.includes("trovej")) return "🌩️";
   if (t.includes("necrot")) return "💀";
   if (t.includes("radiante")) return "✨";
