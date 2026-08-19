@@ -5406,3 +5406,10 @@ select {
   text-shadow: 0 0 10px rgba(216,181,106,0.55), 0 0 18px rgba(216,181,106,0.28);
 }
 
+.arma-sintonia-preview,
+.armadura-sintonia-preview {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: #c4a95b;
+  font-weight: 600;
+}
