@@ -636,7 +636,7 @@ function getAtributoFinal(attr) {
     bonusRaca = racas[racaSelect]?.[attr] || 0;
   }
 
-  return Math.min(base + bonusRaca, 20);
+  return base + bonusRaca;
 }
 
 function atualizarAtributosFinaisVisuais() {
@@ -820,7 +820,22 @@ function atualizarModsMaster(tipo) {
 
     const valor = parseInt(input.value) || 10;
 
-    const mod = Math.floor((valor - 10) / 2);
+    const mod =
+  valor <= 1 ? -5 :
+  valor <= 3 ? -4 :
+  valor <= 5 ? -3 :
+  valor <= 7 ? -2 :
+  valor <= 9 ? -1 :
+  valor <= 11 ? 0 :
+  valor <= 13 ? 1 :
+  valor <= 15 ? 2 :
+  valor <= 17 ? 3 :
+  valor <= 19 ? 4 :
+  valor <= 21 ? 5 :
+  valor <= 23 ? 6 :
+  valor <= 25 ? 7 :
+  valor <= 27 ? 8 :
+  valor <= 29 ? 9 : 10;
 
     const span = document.getElementById(tipo + "Mod" + attr);
 
@@ -896,7 +911,6 @@ function getIconeTipo(tipo) {
   if (t.includes("gelo")) return "❄️";
   if (t.includes("agua")) return "💧";
   if (t.includes("raio")) return "⚡";
-  if (t.includes("cura")) return "🩹";
   if (t.includes("trovej")) return "🌩️";
   if (t.includes("necrot")) return "💀";
   if (t.includes("radiante")) return "✨";
@@ -1307,6 +1321,39 @@ function editarArma(index) {
         </label>
       </div>
 
+      <div class="toggle-cargas">
+  <span class="toggle-cargas-texto">Requer sintonização</span>
+
+  <label class="switch-cargas">
+    <input
+      type="checkbox"
+      id="editArmaRequerSintonia"
+      ${arma.requerSintonia ? "checked" : ""}
+      onchange="toggleEditSintoniaArma()"
+    >
+    <span class="slider-cargas"></span>
+  </label>
+</div>
+
+
+<div
+  id="boxEditArmaSintonizado"
+  style="display:${arma.requerSintonia ? "block" : "none"};"
+>
+  <div class="toggle-cargas">
+    <span class="toggle-cargas-texto">Está sintonizado</span>
+
+    <label class="switch-cargas">
+      <input
+        type="checkbox"
+        id="editArmaSintonizado"
+        ${arma.sintonizado ? "checked" : ""}
+      >
+      <span class="slider-cargas"></span>
+    </label>
+  </div>
+</div>
+
       <input
         id="editArmaMaxCargas"
         type="number"
@@ -1369,7 +1416,6 @@ function editarPoder(index) {
   <option value="fogo" ${normalizarTipo(poder.tipo) === "fogo" ? "selected" : ""}>🔥 Fogo</option>
   <option value="gelo" ${normalizarTipo(poder.tipo) === "gelo" ? "selected" : ""}>❄️ Gelo</option>
   <option value="raio" ${normalizarTipo(poder.tipo) === "raio" ? "selected" : ""}>⚡ Raio</option>
-  <option value="cura" ${normalizarTipo(poder.tipo) === "cura" ? "selected" : ""}>🩹 Cura</option>
   <option value="trovejante" ${normalizarTipo(poder.tipo) === "trovejante" ? "selected" : ""}>🌩️ Trovejante</option>
   <option value="necrotico" ${normalizarTipo(poder.tipo) === "necrotico" ? "selected" : ""}>💀 Necrótico</option>
   <option value="radiante" ${normalizarTipo(poder.tipo) === "radiante" ? "selected" : ""}>✨ Radiante</option>
@@ -1531,6 +1577,13 @@ async function salvarEdicaoArma(index) {
   const dano = document.getElementById("editArmaDano").value.trim();
   const desc = document.getElementById("editArmaDesc").value.trim();
 
+  const requerSintonia =
+  !!document.getElementById("editArmaRequerSintonia")?.checked;
+
+const sintonizado =
+  requerSintonia &&
+  !!document.getElementById("editArmaSintonizado")?.checked;
+
   const temCargas = !!document.getElementById("editArmaTemCargas")?.checked;
   const maxCargas = temCargas
     ? parseInt(document.getElementById("editArmaMaxCargas")?.value) || 0
@@ -1571,15 +1624,17 @@ async function salvarEdicaoArma(index) {
   }
 
   armas[index] = {
-    nome,
-    dano,
-    desc,
-    temCargas,
-    maxCargas,
-    cargasGastas,
-    imagemUrl,
-    imagemDeleteUrl,
-  };
+  nome,
+  dano,
+  desc,
+  temCargas,
+  maxCargas,
+  cargasGastas,
+  requerSintonia,
+  sintonizado,
+  imagemUrl,
+  imagemDeleteUrl,
+};
 
   editArmaImagemBase64Temp = "";
   renderArmas();
@@ -2247,6 +2302,9 @@ async function addArmadura() {
     }
   }
 
+    const requerSintonia = !!document.getElementById("armaduraRequerSintonia")?.checked;
+  const sintonizado = requerSintonia && !!document.getElementById("armaduraSintonizado")?.checked;
+
   const novaArmadura = {
     nome,
     ca,
@@ -2254,6 +2312,8 @@ async function addArmadura() {
     temCargas,
     maxCargas,
     cargasGastas: temCargas ? Array(maxCargas).fill(false) : [],
+    requerSintonia,
+    sintonizado,
     imagemUrl,
     imagemDeleteUrl,
   };
@@ -2283,6 +2343,13 @@ async function addArmadura() {
   document.getElementById("armaduraCA").value = "";
   document.getElementById("armaduraDesc").value = "";
 
+    const requerSintoniaEl = document.getElementById("armaduraRequerSintonia");
+  const sintonizadoEl = document.getElementById("armaduraSintonizado");
+  const boxSintonizadoEl = document.getElementById("boxArmaduraSintonizado");
+  if (requerSintoniaEl) requerSintoniaEl.checked = false;
+  if (sintonizadoEl) sintonizadoEl.checked = false;
+  if (boxSintonizadoEl) boxSintonizadoEl.style.display = "none";
+
   if (temCargasEl) temCargasEl.checked = false;
   if (maxCargasEl) {
     maxCargasEl.value = "";
@@ -2292,6 +2359,32 @@ async function addArmadura() {
   armaduraImagemBase64Temp = "";
   document.getElementById("armaduraImagem").value = "";
   document.getElementById("armaduraImagemPreview").style.display = "none";
+}
+
+function toggleSintoniaArma() {
+  const requer = document.getElementById("armaRequerSintonia");
+  const box = document.getElementById("boxArmaSintonizado");
+  const sintonizado = document.getElementById("armaSintonizado");
+  if (!requer || !box) return;
+  if (requer.checked) {
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+    if (sintonizado) sintonizado.checked = false;
+  }
+}
+
+function toggleSintoniaArmadura() {
+  const requer = document.getElementById("armaduraRequerSintonia");
+  const box = document.getElementById("boxArmaduraSintonizado");
+  const sintonizado = document.getElementById("armaduraSintonizado");
+  if (!requer || !box) return;
+  if (requer.checked) {
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+    if (sintonizado) sintonizado.checked = false;
+  }
 }
 
 function toggleCargaArmadura(indexArmadura, indexCarga) {
@@ -2335,6 +2428,15 @@ function renderArmaduras() {
       `
         : "";
 
+        const sintoniaHTML = armadura.requerSintonia
+  ? `
+    <p class="armadura-sintonia-preview">
+      🔗 Requer sintonização
+      ${armadura.sintonizado ? " • ✓ Sintonizado" : " • ✗ Não sintonizado"}
+    </p>
+  `
+  : "";
+
     li.innerHTML = `
       <button type="button" class="drag-handle" aria-label="Arrastar para reordenar">⠿</button>
 
@@ -2342,9 +2444,13 @@ function renderArmaduras() {
         <strong class="armadura-nome">${esc(armadura.nome) || "Sem nome"}</strong>
         <p class="armadura-ca-preview">CA: ${esc(armadura.ca) || "Sem CA"}</p>
         <p class="armadura-desc-preview">
-          ${armadura.desc ? esc(armadura.desc).substring(0, 60) + (armadura.desc.length > 60 ? "..." : "") : "Sem descrição"}
-        </p>
-        ${cargasHTML}
+          <p class="armadura-desc-preview">
+  ${armadura.desc ? esc(armadura.desc).substring(0, 60) + (armadura.desc.length > 60 ? "..." : "") : "Sem descrição"}
+</p>
+
+${sintoniaHTML}
+
+${cargasHTML}
       </div>
 
       <div class="item-acoes">
@@ -2458,6 +2564,38 @@ function editarArmadura(index) {
         </label>
       </div>
 
+      <div class="toggle-cargas">
+  <span class="toggle-cargas-texto">Requer sintonização</span>
+
+  <label class="switch-cargas">
+    <input
+      type="checkbox"
+      id="editArmaduraRequerSintonia"
+      ${armadura.requerSintonia ? "checked" : ""}
+      onchange="toggleEditSintoniaArmadura()"
+    >
+    <span class="slider-cargas"></span>
+  </label>
+</div>
+
+<div
+  id="boxEditArmaduraSintonizado"
+  style="display:${armadura.requerSintonia ? "block" : "none"};"
+>
+  <div class="toggle-cargas">
+    <span class="toggle-cargas-texto">Está sintonizado</span>
+
+    <label class="switch-cargas">
+      <input
+        type="checkbox"
+        id="editArmaduraSintonizado"
+        ${armadura.sintonizado ? "checked" : ""}
+      >
+      <span class="slider-cargas"></span>
+    </label>
+  </div>
+</div>
+
       <input
         id="editArmaduraMaxCargas"
         type="number"
@@ -2491,10 +2629,53 @@ function toggleEditCampoCargasArmadura() {
   }
 }
 
+function toggleEditSintoniaArma() {
+  const requer = document.getElementById("editArmaRequerSintonia");
+  const box = document.getElementById("boxEditArmaSintonizado");
+  const sintonizado = document.getElementById("editArmaSintonizado");
+
+  if (!requer || !box) return;
+
+  if (requer.checked) {
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+
+    if (sintonizado) {
+      sintonizado.checked = false;
+    }
+  }
+}
+
+function toggleEditSintoniaArmadura() {
+  const requer = document.getElementById("editArmaduraRequerSintonia");
+  const box = document.getElementById("boxEditArmaduraSintonizado");
+  const sintonizado = document.getElementById("editArmaduraSintonizado");
+
+  if (!requer || !box) return;
+
+  if (requer.checked) {
+    box.style.display = "block";
+  } else {
+    box.style.display = "none";
+
+    if (sintonizado) {
+      sintonizado.checked = false;
+    }
+  }
+}
+
 async function salvarEdicaoArmadura(index) {
   const nome = document.getElementById("editArmaduraNome").value.trim();
   const ca = document.getElementById("editArmaduraCA").value.trim();
   const desc = document.getElementById("editArmaduraDesc").value.trim();
+
+  const requerSintonia =
+  !!document.getElementById("editArmaduraRequerSintonia")?.checked;
+
+const sintonizado =
+  requerSintonia &&
+  !!document.getElementById("editArmaduraSintonizado")?.checked;
 
   const temCargas = !!document.getElementById("editArmaduraTemCargas")?.checked;
   const maxCargas = temCargas
@@ -2536,15 +2717,17 @@ async function salvarEdicaoArmadura(index) {
   }
 
   armaduras[index] = {
-    nome,
-    ca,
-    desc,
-    temCargas,
-    maxCargas,
-    cargasGastas,
-    imagemUrl,
-    imagemDeleteUrl,
-  };
+  nome,
+  ca,
+  desc,
+  temCargas,
+  maxCargas,
+  cargasGastas,
+  requerSintonia,
+  sintonizado,
+  imagemUrl,
+  imagemDeleteUrl,
+};
 
   editArmaduraImagemBase64Temp = "";
   renderArmaduras();
@@ -3829,6 +4012,9 @@ async function addArma() {
     }
   }
 
+    const requerSintonia = !!document.getElementById("armaRequerSintonia")?.checked;
+  const sintonizado = requerSintonia && !!document.getElementById("armaSintonizado")?.checked;
+
   const novaArma = {
     nome,
     dano,
@@ -3836,6 +4022,8 @@ async function addArma() {
     temCargas,
     maxCargas,
     cargasGastas: temCargas ? Array(maxCargas).fill(false) : [],
+    requerSintonia,
+    sintonizado,
     imagemUrl,
     imagemDeleteUrl,
   };
@@ -3864,6 +4052,13 @@ async function addArma() {
   document.getElementById("armaNome").value = "";
   document.getElementById("armaDano").value = "";
   if (descEl) descEl.value = "";
+
+    const requerSintoniaEl = document.getElementById("armaRequerSintonia");
+  const sintonizadoEl = document.getElementById("armaSintonizado");
+  const boxSintonizadoEl = document.getElementById("boxArmaSintonizado");
+  if (requerSintoniaEl) requerSintoniaEl.checked = false;
+  if (sintonizadoEl) sintonizadoEl.checked = false;
+  if (boxSintonizadoEl) boxSintonizadoEl.style.display = "none";
 
   if (temCargasEl) temCargasEl.checked = false;
   if (maxCargasEl) {
@@ -3907,6 +4102,15 @@ function renderArmas() {
       `
         : "";
 
+        const sintoniaHTML = arma.requerSintonia
+  ? `
+    <p class="arma-sintonia-preview">
+      🔗 Requer sintonização
+      ${arma.sintonizado ? " • ✓ Sintonizado" : " • ✗ Não sintonizado"}
+    </p>
+  `
+  : "";
+
     li.innerHTML = `
       <button type="button" class="drag-handle" aria-label="Arrastar para reordenar">⠿</button>
 
@@ -3914,9 +4118,12 @@ function renderArmas() {
         <strong class="arma-nome">${esc(arma.nome) || "Sem nome"}</strong>
         <p class="arma-dano-preview">${esc(arma.dano) || "Sem dano"}</p>
         <p class="arma-desc-preview">
-          ${arma.desc ? esc(arma.desc).substring(0, 60) + (arma.desc.length > 60 ? "..." : "") : "Sem descrição"}
-        </p>
-        ${cargasHTML}
+  ${arma.desc ? esc(arma.desc).substring(0, 60) + (arma.desc.length > 60 ? "..." : "") : "Sem descrição"}
+</p>
+
+${sintoniaHTML}
+
+${cargasHTML}
       </div>
 
       <div class="item-acoes">
@@ -4919,7 +5126,7 @@ function limitarAtributo(input) {
   let valor = parseInt(input.value);
 
   if (isNaN(valor)) return;
-  if (valor > 20) input.value = 20;
+  if (valor > 30) input.value = 30;
   if (valor < 1) input.value = 1;
 }
 
@@ -5789,8 +5996,14 @@ async function salvarMonstroMestre() {
     lore: document.getElementById("monstroLore")?.value.trim() || "",
     habilidades: document.getElementById("monstroHabilidades")?.value.trim() || "",
     ataques:     document.getElementById("monstroAtaques")?.value.trim()     || "",
+    velocidade: document.getElementById("monstroVelocidade")?.value.trim() || "",
+    saves:      document.getElementById("monstroSaves")?.value.trim() || "",
+    sentidos:   document.getElementById("monstroSentidos")?.value.trim() || "",
+    idiomas:    document.getElementById("monstroIdiomas")?.value.trim() || "",
     reacoes:     document.getElementById("monstroReacoes")?.value.trim()     || "",
     resistencias: document.getElementById("monstroResistencias")?.value.trim() || "",
+    imunidades: document.getElementById("monstroImunidades")?.value.trim() || "",
+    vulnerabilidades: document.getElementById("monstroVulnerabilidades")?.value.trim() || "",
     pontoEncontro: document.getElementById("bossPontoEncontro")?.value.trim() || "",
 
     dialogos: (document.getElementById("monstroDialogos")?.value || "")
@@ -5955,6 +6168,8 @@ function limparFormMonstro() {
     "monstroCa",
     "monstroLore",
     "monstroHabilidades","monstroAtaques","monstroReacoes","monstroResistencias",
+    "monstroVelocidade","monstroSaves","monstroSentidos","monstroIdiomas",
+    "monstroImunidades","monstroVulnerabilidades",
     "monstroDialogos",
     "monstroEncontros"
   ];
@@ -6046,9 +6261,9 @@ function renderMonstrosMestre() {
       return ra !== rb ? ra - rb : (a.nome || "").localeCompare(b.nome || "");
     }
     if (ordenacao === "itens") {
-      const ordemRar = { reliquia: 0, raro: 1, incomum: 2, normal: 3 };
-      const ra = ordemRar[a.raridade] ?? 3;
-      const rb = ordemRar[b.raridade] ?? 3;
+      const ordemRar = { lendario: 0, muitoraro: 1, raro: 2, incomum: 3, comum: 4 };
+      const ra = ordemRar[a.raridade] ?? 4;
+      const rb = ordemRar[b.raridade] ?? 4;
       return ra !== rb ? ra - rb : (a.nome || "").localeCompare(b.nome || "");
     }
     return 0;
@@ -6088,7 +6303,7 @@ function renderMonstrosMestre() {
 
     const badge = { boss:"💀 Boss", item:"⚔️ Item", npc:"🧙 NPC", mapa:"🗺️ Mapa" }[entry._tipo] || "👹 Criatura";
     const subtitulo = entry._tipo === "item"
-      ? [entry.tipo, ({normal:"Normal",incomum:"Incomum",raro:"Raro",reliquia:"Relíquia"})[entry.raridade]].filter(Boolean).join(" · ")
+      ? [entry.tipo, ({comum:"Comum",incomum:"Incomum",raro:"Raro",muitoraro:"Muito Raro",lendario:"Lendário"})[entry.raridade], entry.classificacao === "artefato" ? "Artefato" : ""].filter(Boolean).join(" · ")
       : entry._tipo === "npc"
         ? [entry.raca, entry.classe].filter(Boolean).join(" · ")
         : (entry.tipo || "Tipo não definido");
@@ -6730,7 +6945,7 @@ function _abrirPopupBossCompendio(boss) {
 
 function _abrirPopupItemCompendio(item) {
   window._entradaSessaoAtual = item;
-  const r = {normal:"Normal", incomum:"Incomum", raro:"Raro", reliquia:"Relíquia"};
+  const r = {comum:"Comum", incomum:"Incomum", raro:"Raro", muitoraro:"Muito Raro", lendario:"Lendário"};
 
   const bloco = (titulo, texto) => `
     <div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
@@ -6743,7 +6958,7 @@ function _abrirPopupItemCompendio(item) {
   const conteudo = `
     ${item.imagem ? `<img src="${item.imagem}" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin-bottom:12px;">` : ""}
     <h2 class="sheet-titulo" style="text-align:center;margin-bottom:4px;">${escapeHtml(item.nome)}</h2>
-    <div class="sheet-meta" style="text-align:center;margin-bottom:8px;">${[item.tipo, r[item.raridade]].filter(Boolean).join(" • ")}</div>
+    <div class="sheet-meta" style="text-align:center;margin-bottom:8px;">${[item.tipo, r[item.raridade], item.classificacao === "artefato" ? "✦ Artefato" : ""].filter(Boolean).join(" • ")}</div>
     ${item.sintonia === "sim" ? `<div class="sheet-meta" style="text-align:center;margin-bottom:12px;">✦ Requer sintonização</div>` : ""}
     ${item.efeito    ? bloco("Efeito", escapeHtml(item.efeito)) : ""}
     ${item.descricao ? bloco("Descrição", escapeHtml(item.descricao)) : ""}
@@ -6990,7 +7205,8 @@ function abrirSheetMonstroPadrao(monstro) {
 
     <h2 class="sheet-titulo" style="text-align:center;margin-bottom:4px;">${escapeHtml(monstro.nome)}</h2>
     <div class="sheet-meta" style="text-align:center;margin-bottom:8px;">${escapeHtml(monstro.tipo || "Tipo não definido")} · ${escapeHtml(monstro.regiao || "Região não definida")}</div>
-    <div class="sheet-hp-ca" style="text-align:center;margin-bottom:12px;">HP ${monstro.hpAtual}/${monstro.hpMax} · CA ${monstro.ca || 0}</div>
+    <div class="sheet-hp-ca" style="text-align:center;margin-bottom:12px;">HP ${monstro.hpAtual}/${monstro.hpMax} · CA ${monstro.ca || 0}${monstro.velocidade ? " · Vel " + escapeHtml(monstro.velocidade) : ""}</div>
+    ${monstro.saves ? `<div class="sheet-meta" style="text-align:center;margin-bottom:8px;">Testes: ${escapeHtml(monstro.saves)}</div>` : ""}
 
     <div class="sheet-status-grid" style="margin-bottom:12px;">
       <div>FOR<br>${monstro.status?.for||10}<small>${formatarModMonstro(calcularModMonstro(monstro.status?.for||10))}</small></div>
@@ -7017,9 +7233,27 @@ function abrirSheetMonstroPadrao(monstro) {
     </div>` : ""}
     ${monstro.resistencias ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
       <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
-        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Resistências / Imunidades</span>
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Resistências</span>
       </div>
       <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.resistencias)}</div>
+    </div>` : ""}
+    ${monstro.imunidades ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Imunidades</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.imunidades)}</div>
+    </div>` : ""}
+    ${monstro.vulnerabilidades ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Vulnerabilidades</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.vulnerabilidades)}</div>
+    </div>` : ""}
+    ${(monstro.sentidos || monstro.idiomas) ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);">
+      <div style="background:#D4C9A8;padding:7px 12px;text-align:center;">
+        <span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Sentidos e Idiomas</span>
+      </div>
+      <div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${monstro.sentidos ? "Sentidos: " + escapeHtml(monstro.sentidos) : ""}${monstro.sentidos && monstro.idiomas ? "<br>" : ""}${monstro.idiomas ? "Idiomas: " + escapeHtml(monstro.idiomas) : ""}</div>
     </div>` : ""}
     ${monstro.fraquezas ? `<div style="background:#E8E0CC;border-radius:10px;margin-bottom:10px;overflow:hidden;border:1px solid rgba(196,169,91,0.25);"><div style="background:#D4C9A8;padding:7px 12px;text-align:center;"><span style="font-size:10px;color:#4A3728;text-transform:uppercase;letter-spacing:1.5px;font-weight:bold;">Fraquezas</span></div><div style="padding:10px 14px;font-size:13px;color:#2A1A10;line-height:1.6;">${formatarTexto(monstro.fraquezas)}</div></div>` : ""}
     ${bloco("Diálogos", monstro.dialogos?.length ? monstro.dialogos.map(f => `"${escapeHtml(f)}"`).join("<br>") : "Sem falas cadastradas.")}
@@ -7271,7 +7505,8 @@ async function salvarItemMestre() {
     dano:      document.getElementById("itemMasterDano")?.value.trim() || "",
     ca:        document.getElementById("itemMasterCA")?.value.trim() || "",
     tipo:      document.getElementById("itemMasterTipo")?.value.trim() || "",
-    raridade:  document.getElementById("itemMasterRaridade")?.value || "normal",
+    raridade:  document.getElementById("itemMasterRaridade")?.value || "comum",
+    classificacao: document.getElementById("itemMasterClassificacao")?.value || "normal",
     sintonia:  document.getElementById("itemMasterSintonia")?.value || "nao",
     efeito:    document.getElementById("itemMasterEfeito")?.value.trim() || "",
     descricao: document.getElementById("itemMasterDescricao")?.value.trim() || "",
@@ -8202,7 +8437,22 @@ function sortearFalaMonstro(index) {
 }
 
 function calcularModMonstro(valor) {
-  return Math.floor((valor - 10) / 2);
+  if (valor <= 1) return -5;
+  if (valor <= 3) return -4;
+  if (valor <= 5) return -3;
+  if (valor <= 7) return -2;
+  if (valor <= 9) return -1;
+  if (valor <= 11) return 0;
+  if (valor <= 13) return 1;
+  if (valor <= 15) return 2;
+  if (valor <= 17) return 3;
+  if (valor <= 19) return 4;
+  if (valor <= 21) return 5;
+  if (valor <= 23) return 6;
+  if (valor <= 25) return 7;
+  if (valor <= 27) return 8;
+  if (valor <= 29) return 9;
+  return 10;
 }
 
 function formatarModMonstro(mod) {
@@ -11224,14 +11474,23 @@ if (window.Capacitor?.Plugins?.App) {
 
   document.addEventListener("touchstart", (e) => {
     if (travado) return;
+
     const dentroDaFicha = e.target.closest("#ficha .aba.active");
     if (!dentroDaFicha) return;
-    if (e.target.closest("textarea, input, select, .mapa-viewer, .sheet-monstro")) return;
+
+    if (
+        e.target.closest(
+            "textarea, input, select, .mapa-viewer, .sheet-monstro, #hpBar, #tempBar"
+        )
+    ) {
+        touchando = false;
+        return;
+    }
 
     touchStartX = e.touches[0].clientX;
     touchStartY = e.touches[0].clientY;
     touchando = true;
-  }, { passive: true });
+}, { passive: true });
 
   document.addEventListener("touchend", (e) => {
     if (!touchando || travado) return;
@@ -11264,9 +11523,9 @@ const maxEstilo = 10;
 
 const habilidadesPorRankEstilo = {
   D: {
-    nome: "Impulso Inicial",
-    efeito: () => `Ao atingir seu primeiro golpe, soma ${Math.floor(get("bonusProf") / 2)} no acerto.`
-  },
+  nome: "Impulso Inicial",
+  efeito: () => `Ao atingir seu primeiro golpe, sua CA aumenta em 2 contanto que esteja vestindo uma armadura.`
+},
   C: {
     nome: "Golpe Preciso",
     efeito: "Você soma sua proficiência no dano."
@@ -11421,4 +11680,3 @@ function devilEstilo() {
     bloqueioDevilEstilo = false;
   }, 100);
 }
-
