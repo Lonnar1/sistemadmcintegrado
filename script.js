@@ -2281,7 +2281,7 @@ async function addArmadura() {
   const maxCargasEl = document.getElementById("armaduraMaxCargas");
 
   const temCargas = !!temCargasEl?.checked;
-  const maxCargas = temCargas ? parseInt(maxCargasEl?.value) || 0 : 0;
+const maxCargas = temCargas ? parseInt(maxCargasEl?.value) || 0 : 0;
 
   if (!nome) return;
   if (temCargas && maxCargas <= 0) return;
@@ -2441,17 +2441,46 @@ function renderArmaduras() {
       <button type="button" class="drag-handle" aria-label="Arrastar para reordenar">⠿</button>
 
       <div class="armadura-info" onclick="verArmadura(${index})">
-        <strong class="armadura-nome">${esc(armadura.nome) || "Sem nome"}</strong>
-        <p class="armadura-ca-preview">CA: ${esc(armadura.ca) || "Sem CA"}</p>
-        <p class="armadura-desc-preview">
-          <p class="armadura-desc-preview">
-  ${armadura.desc ? esc(armadura.desc).substring(0, 60) + (armadura.desc.length > 60 ? "..." : "") : "Sem descrição"}
-</p>
 
-${sintoniaHTML}
+  <strong class="armadura-nome">
+    ${esc(armadura.nome) || "Sem nome"}
+    ${
+      armadura.requerSintonia
+        ? `<span class="item-tag-sintonia">${armadura.sintonizado ? "Sint." : "Req. Sint."}</span>`
+        : ""
+    }
+  </strong>
 
-${cargasHTML}
-      </div>
+  <p class="armadura-ca-preview">
+    CA: ${esc(armadura.ca) || "Sem CA"}
+  </p>
+
+  <div class="item-subtags">
+    ${
+      armadura.requerSintonia
+        ? `<span class="item-subtag">🔗 Requer sintonia</span>`
+        : ""
+    }
+
+    ${
+      armadura.sintonizado
+        ? `<span class="item-subtag ativo">✅ Sintonizado</span>`
+        : ""
+    }
+  </div>
+
+  <p class="armadura-desc-preview">
+    ${
+      armadura.desc
+        ? esc(armadura.desc).substring(0, 60) +
+          (armadura.desc.length > 60 ? "..." : "")
+        : "Sem descrição"
+    }
+  </p>
+
+  ${cargasHTML}
+
+</div>
 
       <div class="item-acoes">
         <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarArmadura(${index})">✏️</button>
@@ -4016,17 +4045,17 @@ async function addArma() {
   const sintonizado = requerSintonia && !!document.getElementById("armaSintonizado")?.checked;
 
   const novaArma = {
-    nome,
-    dano,
-    desc,
-    temCargas,
-    maxCargas,
-    cargasGastas: temCargas ? Array(maxCargas).fill(false) : [],
-    requerSintonia,
-    sintonizado,
-    imagemUrl,
-    imagemDeleteUrl,
-  };
+  nome,
+  dano,
+  desc,
+  temCargas,
+  maxCargas,
+  cargasGastas: temCargas ? Array(maxCargas).fill(false) : [],
+  requerSintonia,
+  sintonizado,
+  imagemUrl,
+  imagemDeleteUrl,
+};
 
   if (editandoArma >= 0) {
     const armaAnterior = armas[editandoArma];
@@ -4102,29 +4131,51 @@ function renderArmas() {
       `
         : "";
 
-        const sintoniaHTML = arma.requerSintonia
-  ? `
-    <p class="arma-sintonia-preview">
-      🔗 Requer sintonização
-      ${arma.sintonizado ? " • ✓ Sintonizado" : " • ✗ Não sintonizado"}
-    </p>
-  `
-  : "";
 
     li.innerHTML = `
       <button type="button" class="drag-handle" aria-label="Arrastar para reordenar">⠿</button>
 
       <div class="arma-info" onclick="verArma(${index})">
-        <strong class="arma-nome">${esc(arma.nome) || "Sem nome"}</strong>
-        <p class="arma-dano-preview">${esc(arma.dano) || "Sem dano"}</p>
-        <p class="arma-desc-preview">
-  ${arma.desc ? esc(arma.desc).substring(0, 60) + (arma.desc.length > 60 ? "..." : "") : "Sem descrição"}
-</p>
 
-${sintoniaHTML}
+  <strong class="arma-nome">
+    ${esc(arma.nome) || "Sem nome"}
+    ${
+      arma.requerSintonia
+        ? `<span class="item-tag-sintonia">${arma.sintonizado ? "Sint." : "Req. Sint."}</span>`
+        : ""
+    }
+  </strong>
 
-${cargasHTML}
-      </div>
+  <p class="arma-dano-preview">
+    ${esc(arma.dano) || "Sem dano"}
+  </p>
+
+  <div class="item-subtags">
+    ${
+      arma.requerSintonia
+        ? `<span class="item-subtag">🔗 Requer sintonia</span>`
+        : ""
+    }
+
+    ${
+      arma.sintonizado
+        ? `<span class="item-subtag ativo">✅ Sintonizado</span>`
+        : ""
+    }
+  </div>
+
+  <p class="arma-desc-preview">
+    ${
+      arma.desc
+        ? esc(arma.desc).substring(0, 60) +
+          (arma.desc.length > 60 ? "..." : "")
+        : "Sem descrição"
+    }
+  </p>
+
+  ${cargasHTML}
+
+</div>
 
       <div class="item-acoes">
         <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarArma(${index})">✏️</button>
