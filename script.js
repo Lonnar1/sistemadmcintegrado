@@ -1947,62 +1947,498 @@ function restaurarSecoes() {
 }
 
 function renderAliados() {
-  const ul = document.getElementById("listaAliados");
+
+  const ul =
+    document.getElementById("listaAliados");
+
   if (!ul || personagemAtual === null) return;
+
 
   ul.innerHTML = "";
 
-  const p = personagens[personagemAtual];
+
+  const p =
+    personagens[personagemAtual];
+
+
   if (!Array.isArray(p.aliados)) {
     p.aliados = [];
   }
 
+
   p.aliados.forEach((aliado, index) => {
-    const li = document.createElement("li");
+
+    const tipo =
+      aliado.tipo || "companheiro";
+
+
+    // Compatibilidade com aliados antigos
+
+    aliado.tipo = tipo;
+
+
+    const li =
+      document.createElement("li");
+
+
     li.className = "item-card";
+
     li.dataset.index = index;
 
-    li.innerHTML = `
-      <button type="button" class="drag-handle" aria-label="Arrastar para reordenar"></button>
 
-      <div class="item-info">
-        <strong class="item-nome">${esc(aliado.nome) || "Sem nome"}</strong>
-        ${aliado.local ? `<div class="aliado-local">📍 ${esc(aliado.local)}</div>` : ""}
+    let etiqueta =
+      "⚔ Companheiro";
+
+
+    if (tipo === "inimigo") {
+
+      etiqueta =
+        "☠ Inimigo";
+
+    } else if (tipo === "neutro") {
+
+      etiqueta =
+        "◈ Neutro";
+
+    }
+
+
+    li.innerHTML = `
+
+      <button
+        type="button"
+        class="drag-handle"
+        aria-label="Arrastar para reordenar"
+      ></button>
+
+
+      <div
+        class="item-info"
+        onclick="abrirDetalhesAliado(${index})"
+        style="cursor:pointer;"
+      >
+
+        <strong class="item-nome">
+
+          ${esc(aliado.nome) || "Sem nome"}
+
+        </strong>
+
+
+        <div class="aliado-tipo">
+
+          ${etiqueta}
+
+        </div>
+
+
+        ${
+          aliado.local
+            ? `
+              <div class="aliado-local">
+
+                📍 ${esc(aliado.local)}
+
+              </div>
+            `
+            : ""
+        }
+
+
         <p class="item-preview">
-          ${aliado.desc ? esc(aliado.desc).substring(0, 80) + (aliado.desc.length > 80 ? "..." : "") : "Sem descrição"}
+
+          ${
+            aliado.desc
+              ? esc(aliado.desc).substring(0, 80) +
+                (aliado.desc.length > 80 ? "..." : "")
+              : "Sem descrição"
+          }
+
         </p>
+
       </div>
+
 
       <div class="item-acoes">
+
         <div class="acoes-topo">
-          <button type="button" class="btn-editar" onclick="event.stopPropagation(); editarAliado(${index})">✏️</button>
+
+          <button
+            type="button"
+            class="btn-editar"
+            onclick="
+              event.stopPropagation();
+              editarAliado(${index})
+            "
+          >
+            ✏️
+          </button>
+
         </div>
-        <button type="button" class="item-remover" onclick="event.stopPropagation(); removerAliado(${index})">X</button>
+
+
+        <button
+          type="button"
+          class="item-remover"
+          onclick="
+            event.stopPropagation();
+            removerAliado(${index})
+          "
+        >
+          X
+        </button>
+
       </div>
+
     `;
 
+
     ul.appendChild(li);
+
   });
 
-  habilitarArrastarReordenar(ul, p.aliados, renderAliados);
+
+  // ARRastar
+  // IMPORTANTE:
+  // NÃO usar filtrarAliados(tipo, botao) aqui.
+
+  habilitarArrastarReordenar(
+    ul,
+    p.aliados,
+    renderAliados
+  );
+
+}
+
+function filtrarAliados(tipo, botao) {
+
+  const botoes =
+    document.querySelectorAll(
+      ".aliado-filtro"
+    );
+
+
+  botoes.forEach((btn) => {
+
+    btn.classList.remove("ativo");
+
+  });
+
+
+  if (botao) {
+
+    botao.classList.add("ativo");
+
+  }
+
+
+  const ul =
+    document.getElementById("listaAliados");
+
+
+  if (!ul || personagemAtual === null) {
+    return;
+  }
+
+
+  const p =
+    personagens[personagemAtual];
+
+
+  if (!p || !Array.isArray(p.aliados)) {
+    return;
+  }
+
+
+  ul.innerHTML = "";
+
+
+  p.aliados.forEach((aliado, index) => {
+
+    const tipoAliado =
+      aliado.tipo || "companheiro";
+
+
+    if (
+      tipo !== "todos" &&
+      tipoAliado !== tipo
+    ) {
+      return;
+    }
+
+
+    const li =
+      document.createElement("li");
+
+
+    li.className = "item-card";
+
+    li.dataset.index = index;
+
+
+    let etiqueta =
+      "⚔ Companheiro";
+
+
+    if (tipoAliado === "inimigo") {
+
+      etiqueta =
+        "☠ Inimigo";
+
+    }
+
+
+    if (tipoAliado === "neutro") {
+
+      etiqueta =
+        "◈ Neutro";
+
+    }
+
+
+    li.innerHTML = `
+
+      <button
+        type="button"
+        class="drag-handle"
+        aria-label="Arrastar para reordenar"
+      ></button>
+
+
+      <div
+        class="item-info"
+        onclick="abrirDetalhesAliado(${index})"
+        style="cursor:pointer;"
+      >
+
+        <strong class="item-nome">
+
+          ${esc(aliado.nome) || "Sem nome"}
+
+        </strong>
+
+
+        <div class="aliado-tipo">
+
+          ${etiqueta}
+
+        </div>
+
+
+        ${
+          aliado.local
+            ? `
+              <div class="aliado-local">
+
+                📍 ${esc(aliado.local)}
+
+              </div>
+            `
+            : ""
+        }
+
+
+        <p class="item-preview">
+
+          ${
+            aliado.desc
+              ? esc(aliado.desc).substring(0, 80) +
+                (aliado.desc.length > 80 ? "..." : "")
+              : "Sem descrição"
+          }
+
+        </p>
+
+      </div>
+
+
+      <div class="item-acoes">
+
+        <div class="acoes-topo">
+
+          <button
+            type="button"
+            class="btn-editar"
+            onclick="
+              event.stopPropagation();
+              editarAliado(${index})
+            "
+          >
+            ✏️
+          </button>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="item-remover"
+          onclick="
+            event.stopPropagation();
+            removerAliado(${index})
+          "
+        >
+          X
+        </button>
+
+      </div>
+
+    `;
+
+
+    ul.appendChild(li);
+
+  });
+
+
+  // Reativa o arrastar depois de filtrar
+
+  habilitarArrastarReordenar(
+    ul,
+    p.aliados,
+    () => filtrarAliados(tipo, botao)
+  );
+}
+
+function abrirDetalhesAliado(index) {
+
+  const p =
+    personagens[personagemAtual];
+
+
+  if (!p || !Array.isArray(p.aliados)) {
+    return;
+  }
+
+
+  const aliado =
+    p.aliados[index];
+
+
+  if (!aliado) return;
+
+
+  const tipo =
+    aliado.tipo || "companheiro";
+
+
+  let tipoTexto =
+    "⚔ Companheiro";
+
+
+  if (tipo === "inimigo") {
+
+    tipoTexto =
+      "☠ Inimigo";
+
+  } else if (tipo === "neutro") {
+
+    tipoTexto =
+      "◈ Neutro";
+
+  }
+
+
+  const html = `
+
+    <div class="aliado-detalhes">
+
+
+      ${
+        aliado.imagem
+          ? `
+            <div class="aliado-detalhes-imagem">
+
+              <img
+                src="${aliado.imagem}"
+                alt=""
+              >
+
+            </div>
+          `
+          : ""
+      }
+
+
+      <div class="aliado-detalhes-cabecalho">
+
+        <div>
+
+          <div class="aliado-detalhes-tipo">
+
+            ${tipoTexto}
+
+          </div>
+
+
+          <h2 class="aliado-detalhes-nome">
+
+            ${esc(aliado.nome) || "Sem nome"}
+
+          </h2>
+
+
+          ${
+            aliado.local
+              ? `
+                <div class="aliado-detalhes-local">
+
+                  📍 ${esc(aliado.local)}
+
+                </div>
+              `
+              : ""
+          }
+
+        </div>
+
+      </div>
+
+
+      <div class="aliado-detalhes-corpo">
+
+        <h3>Descrição</h3>
+
+        <p>${
+          aliado.desc
+            ? esc(aliado.desc)
+            : "Nenhuma descrição foi adicionada."
+        }</p>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  abrirPopup(
+    aliado.nome || "Detalhes",
+    html,
+    true,
+    () => editarAliado(index)
+  );
+
 }
 
 function removerAliado(index) {
-  const p = personagens[personagemAtual];
-  if (!p || !Array.isArray(p.aliados)) return;
+
+  const p =
+    personagens[personagemAtual];
+
+
+  if (!p || !Array.isArray(p.aliados)) {
+    return;
+  }
+
 
   p.aliados.splice(index, 1);
 
-  if (editandoAliado === index) {
-    editandoAliado = -1;
-    document.getElementById("aliadoNome").value = "";
-    document.getElementById("aliadoDesc").value = "";
-  } else if (editandoAliado > index) {
-    editandoAliado--;
-  }
 
   salvarTudo();
+
   renderAliados();
+
 }
 
 function toggleDominio(index) {
@@ -2059,77 +2495,486 @@ function toggleCampoCargas() {
   }
 }
 function editarAliado(index) {
+
   const p = personagens[personagemAtual];
+
   if (!p || !Array.isArray(p.aliados)) return;
 
   const aliado = p.aliados[index];
+
   if (!aliado) return;
+
+  const tipo = aliado.tipo || "companheiro";
 
   const html = `
     <div class="popup-form">
-      <label class="popup-label">Nome</label>
-      <input id="editAliadoNome" value="${aliado.nome || ""}">
 
-      <label class="popup-label">Região / Local</label>
-      <input id="editAliadoLocal" value="${aliado.local || ""}">
+      <label class="popup-label">
+        Nome
+      </label>
 
-      <label class="popup-label">Descrição</label>
-      <textarea id="editAliadoDesc">${aliado.desc || ""}</textarea>
+      <input
+        id="editAliadoNome"
+        value="${esc(aliado.nome || "")}"
+      >
 
-      <button class="popup-salvar-btn" onclick="salvarEdicaoAliado(${index})">
+
+      <label class="popup-label">
+        Tipo
+      </label>
+
+      <select id="editAliadoTipo">
+
+        <option
+          value="companheiro"
+          ${tipo === "companheiro" ? "selected" : ""}
+        >
+          ⚔ Companheiro
+        </option>
+
+        <option
+          value="inimigo"
+          ${tipo === "inimigo" ? "selected" : ""}
+        >
+          ☠ Inimigo
+        </option>
+
+        <option
+          value="neutro"
+          ${tipo === "neutro" ? "selected" : ""}
+        >
+          ◈ Neutro
+        </option>
+
+      </select>
+
+
+      <label class="popup-label">
+        Região / Local
+      </label>
+
+      <input
+        id="editAliadoLocal"
+        value="${esc(aliado.local || "")}"
+      >
+
+
+      <label class="popup-label">
+        Descrição
+      </label>
+
+      <textarea
+        id="editAliadoDesc"
+      >${esc(aliado.desc || "")}</textarea>
+
+
+      <!-- IMAGEM -->
+
+      <label class="popup-label">
+        Imagem do personagem (opcional)
+      </label>
+
+
+      <input
+        type="file"
+        id="editAliadoImagem"
+        accept="image/*"
+        style="display:none;"
+        onchange="previewEdicaoAliadoImagem()"
+      >
+
+
+      <label
+        for="editAliadoImagem"
+        class="botao-upload"
+      >
+        🖼 Alterar imagem (opcional)
+      </label>
+
+
+      <img
+        id="editAliadoImagemPreview"
+        src="${aliado.imagem || ""}"
+        style="
+          display:${aliado.imagem ? "block" : "none"};
+          max-width:100%;
+          max-height:180px;
+          object-fit:contain;
+          border-radius:10px;
+          margin-top:8px;
+        "
+      >
+
+
+      <span
+        id="editAliadoRemoverImagem"
+        class="link-remover-imagem"
+        onclick="removerImagemEdicaoAliado()"
+        style="
+          display:${aliado.imagem ? "block" : "none"};
+        "
+      >
+        Remover imagem
+      </span>
+
+
+      <button
+        class="popup-salvar-btn"
+        onclick="salvarEdicaoAliado(${index})"
+      >
         Salvar
       </button>
+
     </div>
   `;
 
-  abrirPopup("Editar aliado", html, true, null);
+
+  abrirPopup(
+    "Editar personagem",
+    html,
+    true,
+    null
+  );
+
 }
 
-function salvarEdicaoAliado(index) {
+async function salvarEdicaoAliado(index) {
+
   const p = personagens[personagemAtual];
+
   if (!p || !Array.isArray(p.aliados)) return;
 
-  const nome = document.getElementById("editAliadoNome").value.trim();
-  const local = document.getElementById("editAliadoLocal").value.trim();
-  const desc = document.getElementById("editAliadoDesc").value.trim();
+  const aliado = p.aliados[index];
+
+  if (!aliado) return;
+
+
+  const nome =
+    document
+      .getElementById("editAliadoNome")
+      .value
+      .trim();
+
+
+  const local =
+    document
+      .getElementById("editAliadoLocal")
+      .value
+      .trim();
+
+
+  const desc =
+    document
+      .getElementById("editAliadoDesc")
+      .value
+      .trim();
+
+
+  const tipo =
+    document
+      .getElementById("editAliadoTipo")
+      ?.value || "companheiro";
+
 
   if (!nome) return;
 
-  p.aliados[index] = {
-    nome,
-    local,
-    desc,
-  };
+
+  // ALTERA O MESMO ALIADO
+
+  aliado.nome = nome;
+
+  aliado.local = local;
+
+  aliado.desc = desc;
+
+  aliado.tipo = tipo;
+
+
+  // VERIFICA SE ESCOLHEU UMA NOVA IMAGEM
+
+  const imagemInput =
+    document.getElementById("editAliadoImagem");
+
+
+  if (imagemInput?.files?.[0]) {
+
+    try {
+
+      aliado.imagem =
+        await comprimirImagem(
+          imagemInput.files[0],
+          900,
+          0.72
+        );
+
+    } catch (e) {
+
+      console.error(
+        "Erro ao processar imagem do aliado:",
+        e
+      );
+
+      alertBonito(
+        "Não consegui processar essa imagem."
+      );
+
+      return;
+
+    }
+
+  }
+
+
+  // SALVA
 
   salvarTudo();
-  renderAliados();
+
   fecharPopup();
+
+  renderAliados();
+
 }
 
-function adicionarAliado() {
-  const nome = document.getElementById("aliadoNome").value.trim();
-  const local = document.getElementById("aliadoLocal").value.trim();
-  const desc = document.getElementById("aliadoDesc").value.trim();
+function previewEdicaoAliadoImagem() {
+
+  const input =
+    document.getElementById(
+      "editAliadoImagem"
+    );
+
+  const preview =
+    document.getElementById(
+      "editAliadoImagemPreview"
+    );
+
+  const remover =
+    document.getElementById(
+      "editAliadoRemoverImagem"
+    );
+
+
+  if (!input?.files?.[0]) return;
+
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload = function (e) {
+
+    if (preview) {
+
+      preview.src = e.target.result;
+
+      preview.style.display = "block";
+
+    }
+
+
+    if (remover) {
+
+      remover.style.display = "block";
+
+    }
+
+  };
+
+
+  reader.readAsDataURL(
+    input.files[0]
+  );
+
+}
+
+function removerImagemEdicaoAliado() {
+
+  const input =
+    document.getElementById(
+      "editAliadoImagem"
+    );
+
+  const preview =
+    document.getElementById(
+      "editAliadoImagemPreview"
+    );
+
+  const remover =
+    document.getElementById(
+      "editAliadoRemoverImagem"
+    );
+
+
+  // Limpa o arquivo escolhido
+
+  if (input) {
+    input.value = "";
+  }
+
+
+  // Esconde a imagem
+
+  if (preview) {
+
+    preview.src = "";
+
+    preview.style.display = "none";
+
+  }
+
+
+  if (remover) {
+
+    remover.style.display = "none";
+
+  }
+
+
+  // Marca o aliado atual para perder a imagem
+
+  const p =
+    personagens[personagemAtual];
+
+
+  if (!p || !Array.isArray(p.aliados)) {
+    return;
+  }
+
+
+  const popupSalvar =
+    document.querySelector(
+      ".popup-salvar-btn"
+    );
+
+
+  if (popupSalvar) {
+
+    popupSalvar.dataset.removerImagem =
+      "true";
+
+  }
+
+}
+
+async function adicionarAliado() {
+
+  const nome =
+    document.getElementById("aliadoNome").value.trim();
+
+  const local =
+    document.getElementById("aliadoLocal").value.trim();
+
+  const desc =
+    document.getElementById("aliadoDesc").value.trim();
+
+  const tipo =
+    document.getElementById("aliadoTipo")?.value ||
+    "companheiro";
+
+
+  // IMAGEM
+  const botaoSalvar =
+  document.querySelector(
+    ".popup-salvar-btn"
+  );
+
+const removerImagem =
+  botaoSalvar?.dataset.removerImagem === "true";
+
+
+if (removerImagem) {
+
+  aliado.imagem = "";
+
+}
+
+
+  const imagemInput =
+    document.getElementById("aliadoImagem");
+
+  let imagem = "";
+
+  if (imagemInput?.files?.[0]) {
+
+    imagem = await comprimirImagem(
+      imagemInput.files[0],
+      900,
+      0.72
+    );
+
+  }
+
 
   if (!nome) return;
 
-  const p = personagens[personagemAtual];
+
+  const p =
+    personagens[personagemAtual];
+
+
   if (!Array.isArray(p.aliados)) {
     p.aliados = [];
   }
 
+
+  // SALVA
+
   p.aliados.push({
+
     nome,
     local,
     desc,
+    tipo,
+    imagem
+
   });
 
+
+  // LIMPA CAMPOS
+
   document.getElementById("aliadoNome").value = "";
+
   document.getElementById("aliadoLocal").value = "";
+
   document.getElementById("aliadoDesc").value = "";
 
+
+  // LIMPA IMAGEM
+
+  if (imagemInput) {
+    imagemInput.value = "";
+  }
+
+
+  const imagemPreview =
+    document.getElementById(
+      "aliadoImagemPreview"
+    );
+
+
+  if (imagemPreview) {
+
+    imagemPreview.src = "";
+
+    imagemPreview.style.display = "none";
+
+  }
+
+
+  // VOLTA PARA COMPANHEIRO
+
+  const tipoInput =
+    document.getElementById("aliadoTipo");
+
+
+  if (tipoInput) {
+    tipoInput.value = "companheiro";
+  }
+
+
   salvarTudo();
+
   renderAliados();
+
 }
 
 function criarPersonagem() {
