@@ -2690,22 +2690,28 @@ async function salvarEdicaoAliado(index) {
   aliado.tipo = tipo;
 
 
-  // VERIFICA SE ESCOLHEU UMA NOVA IMAGEM
+   const imagemInput =
+    document.getElementById("aliadoImagem");
 
-  const imagemInput =
-    document.getElementById("editAliadoImagem");
-
+  let imagem = "";
 
   if (imagemInput?.files?.[0]) {
 
     try {
 
-      aliado.imagem =
-        await comprimirImagem(
-          imagemInput.files[0],
-          900,
-          0.72
-        );
+      const base64 = await comprimirImagem(
+        imagemInput.files[0],
+        900,
+        0.72
+      );
+
+      const resultado = await uploadImagemFirebase(base64, "aliado");
+
+      if (resultado.erro || !resultado.url) {
+        alertBonito(_mensagemErroUpload("A imagem anterior foi mantida."));
+      } else {
+        aliado.imagem = resultado.url;
+      }
 
     } catch (e) {
 
@@ -2723,6 +2729,15 @@ async function salvarEdicaoAliado(index) {
     }
 
   }
+
+
+  // Diferencia "sem internet de verdade" de "o serviço de imagens caiu"
+function _mensagemErroUpload(complemento) {
+  if (!navigator.onLine) {
+    return `Você está sem internet no momento. Conecte-se e tente enviar a imagem de novo. ${complemento || ""}`.trim();
+  }
+  return `O serviço de imagens está fora do ar no momento. Tente enviar a foto de novo daqui a pouco. ${complemento || ""}`.trim();
+}
 
 
   // SALVA
@@ -2871,24 +2886,7 @@ async function adicionarAliado() {
     "companheiro";
 
 
-  // IMAGEM
-  const botaoSalvar =
-  document.querySelector(
-    ".popup-salvar-btn"
-  );
-
-const removerImagem =
-  botaoSalvar?.dataset.removerImagem === "true";
-
-
-if (removerImagem) {
-
-  aliado.imagem = "";
-
-}
-
-
-  const imagemInput =
+   const imagemInput =
     document.getElementById("aliadoImagem");
 
   let imagem = "";
@@ -12353,6 +12351,65 @@ if (window.Capacitor?.Plugins?.App) {
   });
 }
 
+// ================= SWIPE ENTRE ABAS DA FICHA =================
+(function () {
+  function irParaAba(index) {
+    const total = ORDEM_ABAS_FICHA.length;
+    const novoIndex = ((index % total) + total) % total; // loop nas pontas
+    const id = ORDEM_ABAS_FICHA[novoIndex];
+    const botao = document.querySelector(`.tab-btn[onclick*="'${id}'"]`);
+    trocarAba(id, botao);
+  }
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchando = false;
+  let travado = false;
+
+  document.addEventListener("touchstart", (e) => {
+    if (travado) return;
+
+    const dentroDaFicha = e.target.closest("#ficha .aba.active");
+    if (!dentroDaFicha) return;
+
+    if (
+        e.target.closest(
+            "textarea, input, select, .mapa-viewer, .sheet-monstro, #hpBar, #tempBar"
+        )
+    ) {
+        touchando = false;
+        return;
+    }
+
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchando = true;
+}, { passive: true });
+
+  document.addEventListener("touchend", (e) => {
+    if (!touchando || travado) return;
+    touchando = false;
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+
+    const DISTANCIA_MINIMA = 60;
+    if (Math.abs(deltaX) < DISTANCIA_MINIMA || Math.abs(deltaX) < Math.abs(deltaY) * 1.5) return;
+
+    const indexAtual = ORDEM_ABAS_FICHA.indexOf(window._abaFichaAtualId);
+
+    travado = true;
+    setTimeout(() => { travado = false; }, 300);
+
+    if (deltaX < 0) {
+      irParaAba(indexAtual + 1);
+    } else {
+      irParaAba(indexAtual - 1);
+    }
+  }, { passive: true });
+})();
 
 /* ================= ESTILO ================= */
 
