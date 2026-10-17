@@ -395,14 +395,6 @@
 
 <div style="height:24px;"></div>
 
-
-<!-- TEMPORARIO -->
-
-<button onclick="forcarRecuperarFichas()"
-  style="background:rgba(196,169,91,0.15);border:1px solid rgba(196,169,91,0.4);color:#E8CC80;font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.08em;padding:8px 18px;border-radius:100px;cursor:pointer;margin-top:14px;display:block;">
-  🔄 Recuperar fichas deste aparelho (TEMPORÁRIO)
-</button>
-
 <button onclick="sairConta()"
   style="background:transparent;border:none;color:rgba(154,138,112,0.6);font-family:'Cinzel',serif;font-size:10px;letter-spacing:0.1em;padding:4px 12px;border-radius:100px;cursor:pointer;transition:all 0.3s ease;margin-top:8px;">
   Sair da conta
@@ -952,6 +944,16 @@
         <div class="status-attr"><label>SAB</label><input id="bossSab" type="number" value="10" oninput="atualizarModsMaster('boss')"><span id="bossModSab">+0</span></div>
         <div class="status-attr"><label>CAR</label><input id="bossCar" type="number" value="10" oninput="atualizarModsMaster('boss')"><span id="bossModCar">+0</span></div>
       </div>
+
+      <div class="criar-campos-duplos">
+        <input id="bossVelocidade" placeholder="Velocidade (ex: 9m, voo 18m)">
+        <input id="bossSaves" placeholder="Testes de Resistência (ex: DES +5, CON +7)">
+      </div>
+      <div class="criar-campos-duplos">
+        <input id="bossSentidos" placeholder="Sentidos (ex: Visão no escuro 18m, Perc. passiva 14)">
+        <input id="bossIdiomas" placeholder="Idiomas (ex: Comum, Abissal)">
+      </div>
+
       <textarea id="bossLore" placeholder="Lore / história"></textarea>
       <textarea id="bossFases" placeholder="Fases (ex: Fase 1 — 100% HP...)"></textarea>
       <textarea id="bossMecanicas" placeholder="Mecânicas especiais"></textarea>
@@ -978,7 +980,9 @@
 
       <textarea id="bossFraquezas" placeholder="Fraquezas"></textarea>
       <textarea id="bossReacoes" placeholder="Reações lendárias"></textarea>
-      <textarea id="bossResistencias" placeholder="Resistências / Imunidades / Vulnerabilidades"></textarea>
+      <textarea id="bossResistencias" placeholder="Resistências a dano (ex: fogo, contundente não mágico)"></textarea>
+      <textarea id="bossImunidades" placeholder="Imunidades a dano / condição (ex: veneno, envenenado)"></textarea>
+      <textarea id="bossVulnerabilidades" placeholder="Vulnerabilidades (ex: radiante)"></textarea>
       <input id="bossPontoEncontro" placeholder="Ponto de encontro">
       <label class="master-upload" style="display:block; margin-bottom:8px;">📷 Imagem do boss<input id="bossImagemInput" type="file" accept="image/*" onchange="previewImagemBoss()"></label>
       <img id="previewBoss" class="preview-monstro" src="" style="display:none;">
@@ -1062,11 +1066,13 @@
     <div class="criar-form-titulo">Criar Item</div>
     <div class="form-master-limpo">
       <input id="itemMasterNome" placeholder="Nome do item">
-      <select id="itemMasterCategoria">
+      <select id="itemMasterCategoria" onchange="atualizarCamposCategoriaItem()">
         <option value="inventario">Item diverso (vai pro inventário)</option>
         <option value="armas">Arma</option>
         <option value="armaduras">Armadura</option>
       </select>
+      <input id="itemMasterDano" placeholder="Dano (ex: 1d8+2 cortante)" style="display:none;">
+      <input id="itemMasterCA" placeholder="CA (ex: 16)" style="display:none;">
       <div class="criar-campos-duplos">
         <input id="itemMasterTipo" placeholder="Tipo (arma, armadura...)">
         <select id="itemMasterRaridade">
@@ -1215,8 +1221,9 @@
         <button class="tab-btn" onclick="trocarAba('inventario', this)">
           🎒
         </button>
-        <button class="tab-btn" onclick="trocarAba('poderes', this)">🔥<span class="tab-label"></button>
+        <button class="tab-btn" onclick="trocarAba('poderes', this)">🔥</button>
         <button class="tab-btn tab-estilo" onclick="trocarAba('estilo', this)">💀</button>
+        <button class="tab-btn" onclick="trocarAba('veiculos', this)" aria-label="Veículos"><svg class="tab-ic-carroca" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 26V18c0-6 7-10 16-10s16 4 16 10v8"/><path d="M16 10.5V26M24 8v18M32 10.5V26"/><path d="M5 26h38l-2 6H7z"/><circle cx="14" cy="37" r="5"/><circle cx="34" cy="37" r="5"/><path d="M43 29h3"/></svg></button>
       </div>
 
       <!-- ================= PERSONAGEM ================= -->
@@ -1241,16 +1248,6 @@
               <select id="racaSelect" onchange="aoMudarRaca()">
                 <option value="" selected>Selecionar raça</option>
                 <option value="custom">Raças personalizadas</option>
-                <option value="humano">Humano</option>
-                <option value="elfo">Elfo</option>
-                <option value="anao">Anão</option>
-                <option value="halfling">Halfling</option>
-                <option value="meio_elfo">Meio-Elfo</option>
-                <option value="meio_orc">Meio-Orc</option>
-                <option value="draconato">Draconato</option>
-                <option value="tiefling">Tiefling</option>
-                <option value="gnomo">Gnomo</option>
-                <option value="tritao">Tritão</option>
               </select>
             </div>
 
@@ -1270,32 +1267,33 @@
 
             </div>
 
-          <!-- IMAGEM -->
+                    <!-- IMAGEM -->
           <div class="personagem-imagem-box">
-            <img id="preview" src="" alt="Preview do personagem" />
+  <div id="carrosselWrapper" style="position:relative;width:100%;cursor:pointer;overflow:hidden;border-radius:12px;" onclick="aoClicarFotoPersonagem()">
+    <img id="preview" src="" alt="Preview do personagem" />
 
-            <div class="upload-imagem personagem-upload">
-              <button
-                type="button"
-                onclick="abrirEditorImagem()"
-                class="botao-upload"
-              >
-                Ajustar imagem
-              </button>
+    <button type="button" id="carrosselAnterior" onclick="event.stopPropagation(); trocarFotoCarrossel(-1)"
+      style="display:none;position:absolute;left:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,0.55);color:#fff;font-size:16px;cursor:pointer;z-index:2;">‹</button>
 
-              <label for="imagem" class="botao-upload"> Escolher imagem </label>
+    <button type="button" id="carrosselProximo" onclick="event.stopPropagation(); trocarFotoCarrossel(1)"
+      style="display:none;position:absolute;right:10px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:none;background:rgba(0,0,0,0.55);color:#fff;font-size:16px;cursor:pointer;z-index:2;">›</button>
 
-              <input
-                type="file"
-                id="imagem"
-                accept="image/*"
-                onchange="previewImagem()"
-              />
-            </div>
-          </div>
-        </div>
+    <span id="carrosselContador"
+      style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.55);color:#fff;font-size:10px;padding:2px 7px;border-radius:20px;z-index:2;"></span>
+
+    <button type="button" onclick="event.stopPropagation(); abrirPopupFotoPersonagem()"
+      style="position:absolute;top:10px;right:10px;width:26px;height:26px;border-radius:50%;border:1px solid rgba(196,169,91,0.5);background:rgba(20,14,8,0.75);color:#C4A95B;font-size:12px;cursor:pointer;z-index:2;display:flex;align-items:center;justify-content:center;padding:0;">
+      ✏️
+    </button>
+
+            <div id="carrosselDots" style="position:absolute;bottom:8px;left:0;right:0;display:flex;gap:6px;justify-content:center;z-index:2;"></div>
+  </div>
+  <input type="file" id="imagem" accept="image/*" onchange="previewImagem()" style="display:none" />
+</div>
+</div>
 
         <!-- 🔥 IDIOMAS -->
+
         <div class="secao-toggle">
           <h2
             class="titulo-secao titulo-toggle"
@@ -1311,149 +1309,88 @@
         </div>
 
         <!-- 🔥 ALIADOS -->
-        <!-- ================= RELAÇÕES ================= -->
+        <div class="secao-toggle">
+          <h2
+            class="titulo-secao titulo-toggle"
+            onclick="toggleSecao('boxAliadosForm', this)"
+          >
+            <span>Vínculos</span>
+            <span class="setinha">▼</span>
+          </h2>
 
-<div class="secao-toggle">
+          <div id="boxAliadosForm" class="conteudo-toggle aberto">
 
-  <h2
-    class="titulo-secao titulo-toggle"
-    onclick="toggleSecao('boxAliadosForm', this)"
-  >
-    <span>Vinculos</span>
-    <span class="setinha">▼</span>
-  </h2>
+  <div class="inv-add">
 
-  <div
-    id="boxAliadosForm"
-    class="conteudo-toggle aberto"
-  >
+    <input id="aliadoNome" placeholder="Nome do personagem" />
 
-    <div class="inv-add">
+    <select id="aliadoTipo">
+      <option value="companheiro">⚔ Companheiro</option>
+      <option value="inimigo">☠ Inimigo</option>
+      <option value="neutro">◈ Neutro</option>
+    </select>
 
-      <input
-        id="aliadoNome"
-        placeholder="Nome do personagem"
-      />
+    <input id="aliadoLocal" placeholder="Região / Local" />
 
-      <select id="aliadoTipo">
-        <option value="companheiro">
-          ⚔ Companheiro
-        </option>
+    <textarea
+      id="aliadoDesc"
+      placeholder="Descrição do personagem"
+    ></textarea>
 
-        <option value="inimigo">
-          ☠ Inimigo
-        </option>
-
-        <option value="neutro">
-          ◈ Neutro
-        </option>
-      </select>
-
-      <input
-        id="aliadoLocal"
-        placeholder="Região / Local"
-      />
-
-      <textarea
-        id="aliadoDesc"
-        placeholder="Descrição do personagem"
-      ></textarea>
-
-
-      <!-- IMAGEM -->
-
-      <input
+    <input
   type="file"
   id="aliadoImagem"
   accept="image/*"
-  style="display: none;"
+  onchange="previewAliadoImagem()"
+  style="display: none"
 />
 
-      <label
-        for="aliadoImagem"
-        class="botao-upload"
-      >
-        🖼 Adicionar imagem (opcional)
-      </label>
+<label
+  for="aliadoImagem"
+  class="botao-upload"
+><i class="ti ti-photo-plus"></i><span>Adicionar imagem <small>(opcional)</small></span></label>
 
-      <img
-        id="aliadoImagemPreview"
-        style="display:none;"
-      />
+<img
+  id="aliadoImagemPreview"
+  style="display: none"
+/>
 
-      <span
-        class="link-remover-imagem"
-        onclick="removerImagemAliado()"
-      >
-        Remover imagem
-      </span>
-
-    </div>
-
-
-    <!-- BOTÃO ADICIONAR -->
-
-    <div class="add-linha">
-
-      <button
-        class="inv-add-btn"
-        onclick="adicionarAliado()"
-      >
-        +
-      </button>
-
-    </div>
+<span
+  class="link-remover-imagem"
+  onclick="removerImagemAliado()"
+><i class="ti ti-trash"></i> Remover imagem</span>
 
   </div>
 
-
-  <!-- FILTROS -->
-
-  <div class="aliados-filtros">
-
-    <button
-      type="button"
-      class="aliado-filtro ativo"
-      onclick="filtrarAliados('todos', this)"
-    >
-      Todos
-    </button>
-
-    <button
-      type="button"
-      class="aliado-filtro"
-      onclick="filtrarAliados('companheiro', this)"
-    >
-      ⚔ Companheiros
-    </button>
-
-    <button
-      type="button"
-      class="aliado-filtro"
-      onclick="filtrarAliados('inimigo', this)"
-    >
-      ☠ Inimigos
-    </button>
-
-    <button
-      type="button"
-      class="aliado-filtro"
-      onclick="filtrarAliados('neutro', this)"
-    >
-      ◈ Neutros
-    </button>
-
+  <div class="add-linha">
+    <button type="button" class="inv-add-btn btn-adicionar" onclick="adicionarAliado()"><i class="ti ti-plus"></i><span>Adicionar personagem</span></button>
   </div>
-
-
-  <!-- LISTA -->
-
-  <ul
-    id="listaAliados"
-    class="lista-sempre-visivel"
-  ></ul>
 
 </div>
+
+<!-- Filtros das relações -->
+<div class="aliados-filtros">
+
+  <button type="button" class="aliado-filtro ativo" onclick="filtrarAliados('todos', this)">
+    Todos
+  </button>
+
+  <button type="button" class="aliado-filtro" onclick="filtrarAliados('companheiro', this)">
+    ⚔ Companheiros
+  </button>
+
+  <button type="button" class="aliado-filtro" onclick="filtrarAliados('inimigo', this)">
+    ☠ Inimigos
+  </button>
+
+  <button type="button" class="aliado-filtro" onclick="filtrarAliados('neutro', this)">
+    ◈ Neutros
+  </button>
+
+</div>
+
+<ul id="listaAliados" class="lista-sempre-visivel"></ul>
+        </div>
 
         <!-- LORE -->
         <div class="secao-toggle">
@@ -1494,126 +1431,175 @@
 
       <!-- ================= ATRIBUTOS ================= -->
       <div class="aba" id="atributos" style="display: none">
+        <h2 class="titulo-secao titulo-atributos">Atributos</h2>
         <div class="atributos-layout-novo">
-          <div class="atributos-compactos">
-            <div class="attr attr-compacto">
-              <span class="attr-sigla">FOR</span>
-              <div class="save-check" onclick="toggleSave('forca')"></div>
-              <input
-                id="forca"
-                type="number"
-                min="1"
-                max="30"
-                value="10"
-                oninput="
-                  limitarAtributo(this);
-                  atualizarTudo();
-                "
-              />
-              <div class="attr-final" id="final_forca">10</div>
-              <div class="attr-mod" id="mod_forca"></div>
-              <div class="save-badge" id="save_forca"></div>
+          <div class="atributos-lista">
+            <div class="attr-card">
+              <div class="attr-card-inner">
+                <div class="attr-icone"><i class="ti ti-barbell"></i></div>
+                <div class="attr-corpo">
+                  <span class="attr-nome">Força</span>
+                  <div class="attr-valores">
+                    <input
+                      id="forca"
+                      type="number"
+                      min="1"
+                      max="30"
+                      value="10"
+                      oninput="
+                        limitarAtributo(this);
+                        atualizarTudo();
+                      "
+                    />
+                    <div class="attr-mod" id="mod_forca" title="Rolar teste" onclick="rolarAtributo('forca')"></div>
+                    <div class="attr-final" id="final_forca">10</div>
+                  </div>
+                </div>
+                <div class="save-check" onclick="toggleSave('forca')" title="Salvaguarda (toque para marcar proficiência)">
+                  <span class="save-label">Resist.</span>
+                  <div class="save-badge" id="save_forca"></div>
+                </div>
+              </div>
             </div>
 
-            <div class="attr attr-compacto">
-              <span class="attr-sigla">DES</span>
-              <div class="save-check" onclick="toggleSave('destreza')"></div>
-              <input
-                id="destreza"
-                type="number"
-                min="1"
-                max="20"
-                value="10"
-                oninput="
-                  limitarAtributo(this);
-                  atualizarTudo();
-                "
-              />
-              <div class="attr-final" id="final_destreza">10</div>
-              <div class="attr-mod" id="mod_destreza"></div>
-              <div class="save-badge" id="save_destreza"></div>
+            <div class="attr-card">
+              <div class="attr-card-inner">
+                <div class="attr-icone"><i class="ti ti-feather"></i></div>
+                <div class="attr-corpo">
+                  <span class="attr-nome">Destreza</span>
+                  <div class="attr-valores">
+                    <input
+                      id="destreza"
+                      type="number"
+                      min="1"
+                      max="20"
+                      value="10"
+                      oninput="
+                        limitarAtributo(this);
+                        atualizarTudo();
+                      "
+                    />
+                    <div class="attr-mod" id="mod_destreza" title="Rolar teste" onclick="rolarAtributo('destreza')"></div>
+                    <div class="attr-final" id="final_destreza">10</div>
+                  </div>
+                </div>
+                <div class="save-check" onclick="toggleSave('destreza')" title="Salvaguarda (toque para marcar proficiência)">
+                  <span class="save-label">Resist.</span>
+                  <div class="save-badge" id="save_destreza"></div>
+                </div>
+              </div>
             </div>
 
-            <div class="attr attr-compacto">
-              <span class="attr-sigla">CON</span>
-              <div
-                class="save-check"
-                onclick="toggleSave('constituicao')"
-              ></div>
-              <input
-                id="constituicao"
-                type="number"
-                min="1"
-                max="20"
-                value="10"
-                oninput="
-                  limitarAtributo(this);
-                  atualizarTudo();
-                "
-              />
-              <div class="attr-final" id="final_constituicao">10</div>
-              <div class="attr-mod" id="mod_constituicao"></div>
-              <div class="save-badge" id="save_constituicao"></div>
+            <div class="attr-card">
+              <div class="attr-card-inner">
+                <div class="attr-icone"><i class="ti ti-shield"></i></div>
+                <div class="attr-corpo">
+                  <span class="attr-nome">Constituição</span>
+                  <div class="attr-valores">
+                    <input
+                      id="constituicao"
+                      type="number"
+                      min="1"
+                      max="20"
+                      value="10"
+                      oninput="
+                        limitarAtributo(this);
+                        atualizarTudo();
+                      "
+                    />
+                    <div class="attr-mod" id="mod_constituicao" title="Rolar teste" onclick="rolarAtributo('constituicao')"></div>
+                    <div class="attr-final" id="final_constituicao">10</div>
+                  </div>
+                </div>
+                <div class="save-check" onclick="toggleSave('constituicao')" title="Salvaguarda (toque para marcar proficiência)">
+                  <span class="save-label">Resist.</span>
+                  <div class="save-badge" id="save_constituicao"></div>
+                </div>
+              </div>
             </div>
 
-            <div class="attr attr-compacto">
-              <span class="attr-sigla">INT</span>
-              <div
-                class="save-check"
-                onclick="toggleSave('inteligencia')"
-              ></div>
-              <input
-                id="inteligencia"
-                type="number"
-                min="1"
-                max="20"
-                value="10"
-                oninput="
-                  limitarAtributo(this);
-                  atualizarTudo();
-                "
-              />
-              <div class="attr-final" id="final_inteligencia">10</div>
-              <div class="attr-mod" id="mod_inteligencia"></div>
-              <div class="save-badge" id="save_inteligencia"></div>
+            <div class="attr-card">
+              <div class="attr-card-inner">
+                <div class="attr-icone"><i class="ti ti-book"></i></div>
+                <div class="attr-corpo">
+                  <span class="attr-nome">Inteligência</span>
+                  <div class="attr-valores">
+                    <input
+                      id="inteligencia"
+                      type="number"
+                      min="1"
+                      max="20"
+                      value="10"
+                      oninput="
+                        limitarAtributo(this);
+                        atualizarTudo();
+                      "
+                    />
+                    <div class="attr-mod" id="mod_inteligencia" title="Rolar teste" onclick="rolarAtributo('inteligencia')"></div>
+                    <div class="attr-final" id="final_inteligencia">10</div>
+                  </div>
+                </div>
+                <div class="save-check" onclick="toggleSave('inteligencia')" title="Salvaguarda (toque para marcar proficiência)">
+                  <span class="save-label">Resist.</span>
+                  <div class="save-badge" id="save_inteligencia"></div>
+                </div>
+              </div>
             </div>
 
-            <div class="attr attr-compacto">
-              <span class="attr-sigla">SAB</span>
-              <div class="save-check" onclick="toggleSave('sabedoria')"></div>
-              <input
-                id="sabedoria"
-                type="number"
-                min="1"
-                max="20"
-                value="10"
-                oninput="
-                  limitarAtributo(this);
-                  atualizarTudo();
-                "
-              />
-              <div class="attr-final" id="final_sabedoria">10</div>
-              <div class="attr-mod" id="mod_sabedoria"></div>
-              <div class="save-badge" id="save_sabedoria"></div>
+            <div class="attr-card">
+              <div class="attr-card-inner">
+                <div class="attr-icone"><i class="ti ti-eye"></i></div>
+                <div class="attr-corpo">
+                  <span class="attr-nome">Sabedoria</span>
+                  <div class="attr-valores">
+                    <input
+                      id="sabedoria"
+                      type="number"
+                      min="1"
+                      max="20"
+                      value="10"
+                      oninput="
+                        limitarAtributo(this);
+                        atualizarTudo();
+                      "
+                    />
+                    <div class="attr-mod" id="mod_sabedoria" title="Rolar teste" onclick="rolarAtributo('sabedoria')"></div>
+                    <div class="attr-final" id="final_sabedoria">10</div>
+                  </div>
+                </div>
+                <div class="save-check" onclick="toggleSave('sabedoria')" title="Salvaguarda (toque para marcar proficiência)">
+                  <span class="save-label">Resist.</span>
+                  <div class="save-badge" id="save_sabedoria"></div>
+                </div>
+              </div>
             </div>
 
-            <div class="attr attr-compacto">
-              <span class="attr-sigla">CAR</span>
-              <div class="save-check" onclick="toggleSave('carisma')"></div>
-              <input
-                id="carisma"
-                type="number"
-                min="1"
-                max="20"
-                value="10"
-                oninput="
-                  limitarAtributo(this);
-                  atualizarTudo();
-                "
-              />
-              <div class="attr-final" id="final_carisma">10</div>
-              <div class="attr-mod" id="mod_carisma"></div>
-              <div class="save-badge" id="save_carisma"></div>
+            <div class="attr-card">
+              <div class="attr-card-inner">
+                <div class="attr-icone"><i class="ti ti-flame"></i></div>
+                <div class="attr-corpo">
+                  <span class="attr-nome">Carisma</span>
+                  <div class="attr-valores">
+                    <input
+                      id="carisma"
+                      type="number"
+                      min="1"
+                      max="20"
+                      value="10"
+                      oninput="
+                        limitarAtributo(this);
+                        atualizarTudo();
+                      "
+                    />
+                    <div class="attr-mod" id="mod_carisma" title="Rolar teste" onclick="rolarAtributo('carisma')"></div>
+                    <div class="attr-final" id="final_carisma">10</div>
+                  </div>
+                </div>
+                <div class="save-check" onclick="toggleSave('carisma')" title="Salvaguarda (toque para marcar proficiência)">
+                  <span class="save-label">Resist.</span>
+                  <div class="save-badge" id="save_carisma"></div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1638,6 +1624,14 @@
                 <input id="bonusProf" value="2" oninput="atualizarTudo()" />
               </div>
             </div>
+
+            <div class="pericias-filtros">
+              <button type="button" class="pericias-filtro ativo" onclick="filtrarPericias('todas', this)">Todas</button>
+              <button type="button" class="pericias-filtro" onclick="filtrarPericias('treinadas', this)">Treinadas</button>
+              <button type="button" class="pericias-filtro" onclick="filtrarPericias('especialista', this)">Especialista</button>
+              <button type="button" class="pericias-filtro pericias-dados" onclick="abrirBandejaDados()" title="Rolar dados livres (dano, etc.)">🎲 Dados</button>
+            </div>
+            <p class="pericias-dica">Toque no valor de uma perícia ou no modificador de um atributo pra rolar.</p>
 
             <div id="pericias"></div>
           </div>
@@ -1720,6 +1714,9 @@
                 placeholder="Descrição da arma"
               ></textarea>
 
+              <span class="mods-titulo">Modificações</span>
+              <div id="armaMods"></div>
+
               <input
                 type="file"
                 id="armaImagem"
@@ -1728,12 +1725,10 @@
                 style="display: none"
               />
               <label for="armaImagem" class="botao-upload"
-                >🖼 Adicionar imagem (opcional)</label
-              >
+                ><i class="ti ti-photo-plus"></i><span>Adicionar imagem <small>(opcional)</small></span></label>
               <img id="armaImagemPreview" style="display: none" />
               <span class="link-remover-imagem" onclick="removerImagemArma()"
-                >Remover imagem</span
-              >
+                ><i class="ti ti-trash"></i> Remover imagem</span>
 
               <div class="toggle-cargas">
                 <span class="toggle-cargas-texto">Usa cargas</span>
@@ -1785,7 +1780,7 @@
               />
 
               <div class="arma-acoes-final">
-                <button class="inv-add-btn" onclick="addArma()">+</button>
+                <button type="button" class="inv-add-btn btn-adicionar" onclick="addArma()"><i class="ti ti-plus"></i><span>Adicionar arma</span></button>
               </div>
             </div>
           </div>
@@ -1811,6 +1806,9 @@
                 placeholder="Descrição da armadura"
               ></textarea>
 
+              <span class="mods-titulo">Modificações</span>
+              <div id="armaduraMods"></div>
+
               <input
                 type="file"
                 id="armaduraImagem"
@@ -1819,14 +1817,12 @@
                 style="display: none"
               />
               <label for="armaduraImagem" class="botao-upload"
-                >🖼 Adicionar imagem (opcional)</label
-              >
+                ><i class="ti ti-photo-plus"></i><span>Adicionar imagem <small>(opcional)</small></span></label>
               <img id="armaduraImagemPreview" style="display: none" />
               <span
                 class="link-remover-imagem"
                 onclick="removerImagemArmadura()"
-                >Remover imagem</span
-              >
+                ><i class="ti ti-trash"></i> Remover imagem</span>
 
               <div class="toggle-cargas">
                 <span class="toggle-cargas-texto">Usa cargas</span>
@@ -1877,7 +1873,7 @@
               />
 
               <div class="add-linha">
-                <button class="inv-add-btn" onclick="addArmadura()">+</button>
+                <button type="button" class="inv-add-btn btn-adicionar" onclick="addArmadura()"><i class="ti ti-plus"></i><span>Adicionar armadura</span></button>
               </div>
             </div>
           </div>
@@ -1943,7 +1939,7 @@
             class="titulo-secao titulo-toggle"
             onclick="toggleSecao('boxMorte', this)"
           >
-            <span>Pontos de Morte</span>
+            <span>Teste de morte</span>
             <span class="setinha">▼</span>
           </h2>
 
@@ -2016,9 +2012,11 @@
         <button class="btn-diario" onclick="toggleDiario()">Diário</button>
 
         <div id="diario-box" class="diario-box" style="display: none">
+          <div id="diarioAbas" class="diario-abas"></div>
+          <div id="diarioDica" class="diario-dica"></div>
           <textarea
             id="diario"
-            oninput="salvarTudo()"
+            oninput="aoDigitarDiario()"
             placeholder="Escreva aqui seu diário, anotações, pistas, missões, nomes, eventos..."
           ></textarea>
         </div>
@@ -2037,6 +2035,9 @@
               <input id="itemNome" placeholder="Nome do item" />
               <textarea id="itemDesc" placeholder="Descrição"></textarea>
 
+              <span class="mods-titulo">Modificações</span>
+              <div id="itemMods"></div>
+
               <input
                 type="file"
                 id="itemImagem"
@@ -2045,12 +2046,10 @@
                 style="display: none"
               />
               <label for="itemImagem" class="botao-upload"
-                >🖼 Adicionar imagem (opcional)</label
-              >
+                ><i class="ti ti-photo-plus"></i><span>Adicionar imagem <small>(opcional)</small></span></label>
               <img id="itemImagemPreview" style="display: none" />
               <span class="link-remover-imagem" onclick="removerImagemItem()"
-                >Remover imagem</span
-              >
+                ><i class="ti ti-trash"></i> Remover imagem</span>
 
               <input
                 id="itemQtd"
@@ -2080,14 +2079,39 @@
                   </label>
                 </div>
               </div>
+
+              <div class="toggle-cargas">
+                <span class="toggle-cargas-texto">É uma bolsa de dinheiro</span>
+                <label class="switch-cargas">
+                  <input type="checkbox" id="itemBolsa" onchange="alternarBolsaForm('item')" />
+                  <span class="slider-cargas"></span>
+                </label>
+              </div>
+
+              <div class="toggle-cargas">
+                <span class="toggle-cargas-texto">É um recipiente (mochila...)</span>
+                <label class="switch-cargas">
+                  <input type="checkbox" id="itemRecipiente" onchange="if (this.checked) document.getElementById('itemBolsa').checked = false; atualizarCampoGuardarEm()" />
+                  <span class="slider-cargas"></span>
+                </label>
+              </div>
+
+              <div id="boxItemGuardarEm" class="select-wrapper" style="display: none">
+                <select id="itemDentroDe"></select>
+              </div>
             </div>
 
             <div class="add-linha">
-              <button class="inv-add-btn" onclick="addItem()">+</button>
+              <button type="button" class="inv-add-btn btn-adicionar" onclick="addItem()"><i class="ti ti-plus"></i><span>Adicionar item</span></button>
             </div>
           </div>
 
           <ul id="lista" class="lista-sempre-visivel"></ul>
+
+          <div id="secaoRecipientes" style="display: none">
+            <h2 class="titulo-secao">Recipientes</h2>
+            <ul id="listaRecipientes" class="lista-recipientes"></ul>
+          </div>
           
           <div class="secao-toggle">
         <h2 class="titulo-secao titulo-toggle" onclick="toggleSecao('boxMapasForm', this)">
@@ -2099,14 +2123,14 @@
             <input id="mapaNome" placeholder="Nome do mapa" />
             <textarea id="mapaDesc" placeholder="Descrição do mapa"></textarea>
             <label class="botao-upload mapa-upload-label">
-              Escolher imagem
+              <i class="ti ti-photo-plus"></i><span>Escolher imagem do mapa</span>
               <input type="file" id="mapaImagem" accept="image/*" onchange="previewMapaImagem()" style="display:none" />
             </label>
             <div id="mapaPreviewBox" style="display:none">
               <img id="mapaPreview" class="mapa-preview-thumb" />
             </div>
             <div class="add-linha">
-              <button class="inv-add-btn" onclick="addMapa()">+</button>
+              <button type="button" class="inv-add-btn btn-adicionar" onclick="addMapa()"><i class="ti ti-plus"></i><span>Adicionar mapa</span></button>
             </div>
           </div>
         </div>
@@ -2163,426 +2187,81 @@
       <div class="aba" id="poderes" style="display: none">
         <h2 class="titulo-secao">Poderes e Magias</h2>
 
-        <div class="dt-box">
-          <h3 class="subtitulo-secao">DT</h3>
-
-          <div class="dt-linha">
-            <div class="campo">
-              <label for="dtBase">Base</label>
-              <input
-                id="dtBase"
-                type="text"
-                value="8"
-                oninput="
-                  atualizarDT();
-                  salvarTudo();
-                "
-              />
-            </div>
-
-            <div class="campo">
-              <label for="dtAtributo">Mod.</label>
-              <input
-                id="dtAtributo"
-                type="text"
-                value="0"
-                oninput="
-                  atualizarDT();
-                  salvarTudo();
-                "
-              />
-            </div>
-
-            <div class="campo">
-              <label for="dtProf">Prof.</label>
-              <input
-                id="dtProf"
-                type="text"
-                value="2"
-                oninput="
-                  atualizarDT();
-                  salvarTudo();
-                "
-              />
-            </div>
-          </div>
-
-          <div class="dt-resultado-box">
-            <span>DT Total</span>
-            <div id="dtTotal">10</div>
-          </div>
+        <!-- descansos -->
+        <div class="descanso-barra">
+          <button type="button" onclick="descansoCurto()"><i class="ti ti-coffee"></i> Descanso curto</button>
+          <button type="button" onclick="descansoLongo()"><i class="ti ti-moon"></i> Descanso longo</button>
         </div>
 
-        <div class="secao-toggle">
-          <h2
-            class="titulo-secao titulo-toggle"
-            onclick="toggleSecao('boxPoderForm', this)"
-          >
-            <span>Adicionar Poder</span>
-            <span class="setinha">▼</span>
-          </h2>
+        <!-- Poderes / Magias -->
+        <div class="pm-switch">
+          <button type="button" id="pmBtnPoderes" class="ativo" onclick="trocarVisaoPM('poderes')">Poderes <span id="contadorPoderes"></span></button>
+          <button type="button" id="pmBtnMagias" onclick="trocarVisaoPM('magias')">Magias <span id="contadorMagias"></span></button>
+        </div>
 
-          <div id="boxPoderForm" class="conteudo-toggle aberto">
-            <div class="poder-add">
-              <input id="poderNome" placeholder="Nome do poder" />
-
-              <div class="select-wrapper">
-                <select id="poderTipo" class="input-personagem">
-                  <option value="">Tipo de dano</option>
-                  <option value="fogo">🔥 Fogo</option>
-                  <option value="gelo">❄️ Gelo</option>
-                  <option value="raio">⚡ Raio</option>
-                  <option value="trovejante">🌩️ Trovejante</option>
-                  <option value="necrotico">💀 Necrótico</option>
-                  <option value="radiante">✨ Radiante</option>
-                  <option value="veneno">☠️ Veneno</option>
-                  <option value="agua">💧 Água</option>
-                  <option value="magico">☄️ Mágico</option>
-                  <option value="psiquico">🧠 Psíquico</option>
-                  <option value="corte">🔪 Corte</option>
-                  <option value="perfurante">📌 Perfurante</option>
-                  <option value="concussao">💥 Concussão</option>
-                  <option value="metal">⚙️ Metal</option>
-                  <option value="fisico">🗡️ Físico</option>
-                  <option value="vento">🍃 Vento</option>
-                  <option value="madeira">🌳 Madeira</option>
-                  <option value="terra">🌍 Terra</option>
-                  <option value="trevas">🌑 Trevas</option>
-                  <option value="luz">🌕 Luz</option>
-                  <option value="espirito">🌓 Espírito</option>
-                </select>
-              </div>
-
-              <input id="poderDano" placeholder="Dano (ex: 2d6, 1d8+3)" />
-
-              <div class="poder-linha">
-                <div class="select-wrapper">
-                  <select id="poderCirculo" class="input-personagem">
-                    <option value="">Sem círculo (Poder)</option>
-                    <option value="talento">Talento</option>
-                    <option value="passiva">Passiva</option>
-                    <option value="0">Círculo 0 (Truque)</option>
-                    <option value="1">Círculo 1</option>
-                    <option value="2">Círculo 2</option>
-                    <option value="3">Círculo 3</option>
-                    <option value="4">Círculo 4</option>
-                    <option value="5">Círculo 5</option>
-                    <option value="6">Círculo 6</option>
-                    <option value="7">Círculo 7</option>
-                    <option value="8">Círculo 8</option>
-                    <option value="9">Círculo 9</option>
-                  </select>
-                </div>
-
-                <input id="poderTempo" placeholder="Conjuração" />
-              </div>
-
-              <div class="poder-linha">
-                <input id="poderAlcance" placeholder="Alcance" />
-                <input id="poderDuracao" placeholder="Duração" />
-              </div>
-
-              <textarea
-                id="poderDesc"
-                placeholder="Descrição do poder"
-              ></textarea>
-              <div class="toggle-cargas">
-                <span class="toggle-cargas-texto">Possui usos</span>
-                <label class="switch-cargas">
-                  <input
-                    type="checkbox"
-                    id="poderTemCargas"
-                    onchange="toggleCampoCargasPoder()"
-                  />
-                  <span class="slider-cargas"></span>
-                </label>
-              </div>
-
-              <input
-                id="poderMaxCargas"
-                type="number"
-                min="1"
-                max="30"
-                placeholder="Qtd. de usos"
-                style="display: none"
-              />
+        <!-- ================= VISÃO PODERES ================= -->
+        <div id="pmPoderes">
+          <div class="pm-toolbar">
+            <div class="pm-busca">
+              <i class="ti ti-search"></i>
+              <input id="buscaPoder" placeholder="Buscar poder..." oninput="renderPoderes()" />
             </div>
+            <button type="button" class="pm-icone-btn" id="btnModoCompacto" onclick="alternarModoCompacto()" title="Alternar lista compacta"><i class="ti ti-layout-list"></i></button>
+            <button type="button" class="pm-novo" onclick="abrirFormPoder(-1, '')"><i class="ti ti-plus"></i> Novo</button>
+          </div>
+          <div class="pm-filtros" id="filtrosOrigem"></div>
+          <div id="listaPoderesSecoes"></div>
+        </div>
 
-            <div class="add-linha">
-              <button class="inv-add-btn" onclick="addPoder()">+</button>
+        <!-- ================= VISÃO MAGIAS ================= -->
+        <div id="pmMagias" style="display: none">
+          <div class="conjurador-cab">
+            <span>CD <b id="cabCD">10</b></span>
+            <span class="conjurador-sep">·</span>
+            <button type="button" class="cab-atk-btn" onclick="rolarAtaqueMagico()" title="Rolar ataque mágico">Ataque <b id="cabAtk">+2</b> 🎲</button>
+            <button type="button" class="pm-icone-btn" onclick="alternarAjusteCD()" title="Ajustar CD"><i class="ti ti-adjustments"></i></button>
+          </div>
+
+          <div class="dt-box" id="dtBoxMagia" style="display: none">
+            <div class="dt-linha">
+              <div class="campo">
+                <label for="dtBase">Base</label>
+                <input id="dtBase" type="text" value="8" oninput="atualizarDT(); salvarTudo();" />
+              </div>
+              <div class="campo">
+                <label for="dtAtributo">Mod. do atributo</label>
+                <input id="dtAtributo" type="text" value="0" oninput="atualizarDT(); salvarTudo();" />
+              </div>
+              <div class="campo">
+                <label for="dtProf">Proficiência</label>
+                <input id="dtProf" type="text" value="2" oninput="atualizarDT(); salvarTudo();" />
+              </div>
+            </div>
+            <div class="dt-resultado-box">
+              <span>CD Total</span>
+              <div id="dtTotal">10</div>
             </div>
           </div>
 
-          <div class="subtabs-poderes">
-  <button
-    class="subtab-poder active"
-    onclick="trocarSubAbaPoderes('poderes-comuns', this)"
-  >
-    Poderes<span class="subtab-contador" id="contadorPoderes"></span>
-  </button>
-  <button
-    class="subtab-poder"
-    onclick="trocarSubAbaPoderes('magias', this)"
-  >
-    Magias<span class="subtab-contador" id="contadorMagias"></span>
-  </button>
-  <button
-    class="subtab-poder"
-    onclick="trocarSubAbaPoderes('talentos', this)"
-  >
-    Talentos<span class="subtab-contador" id="contadorTalentos"></span>
-  </button>
-  <button
-    class="subtab-poder"
-    onclick="trocarSubAbaPoderes('passivas', this)"
-  >
-    Passivas<span class="subtab-contador" id="contadorPassivas"></span>
-  </button>
-</div>
+          <div id="concentracaoBanner"></div>
 
-          <div id="subaba-poderes-comuns" class="subaba-poderes active">
-  <ul id="listaPoderesComuns" class="lista-sempre-visivel"></ul>
-</div>
-
-<div id="subaba-talentos" class="subaba-poderes" style="display: none">
-  <ul id="listaTalentos" class="lista-sempre-visivel"></ul>
-</div>
-
-<div id="subaba-passivas" class="subaba-poderes" style="display: none">
-  <ul id="listaPassivas" class="lista-sempre-visivel"></ul>
-</div>
-
-          <div id="subaba-magias" class="subaba-poderes" style="display: none">
-            <div class="subtabs-circulos">
-              <div class="bloco-circulos">
-                <button
-                  class="subtab-circulo active"
-                  onclick="trocarSubAbaCirculo(0, this)"
-                >
-                  0
-                </button>
-                <button
-                  class="subtab-circulo"
-                  onclick="trocarSubAbaCirculo(1, this)"
-                >
-                  1
-                </button>
-                <button
-                  class="subtab-circulo"
-                  onclick="trocarSubAbaCirculo(2, this)"
-                >
-                  2
-                </button>
-                <button
-                  class="subtab-circulo"
-                  onclick="trocarSubAbaCirculo(3, this)"
-                >
-                  3
-                </button>
-                <button
-                  class="subtab-circulo"
-                  onclick="trocarSubAbaCirculo(4, this)"
-                >
-                  4
-                </button>
-              </div>
-
-              <div class="bloco-circulos">
-                <button
-                  class="subtab-circulo"
-                  onclick="trocarSubAbaCirculo(5, this)"
-                >
-                  5
-                </button>
-                <button
-                  class="subtab-circulo"
-                  onclick="trocarSubAbaCirculo(6, this)"
-                >
-                  6
-                </button>
-                <button
-                  class="subtab-circulo"
-                  onclick="trocarSubAbaCirculo(7, this)"
-                >
-                  7
-                </button>
-                <button
-                  class="subtab-circulo"
-                  onclick="trocarSubAbaCirculo(8, this)"
-                >
-                  8
-                </button>
-                <button
-                  class="subtab-circulo"
-                  onclick="trocarSubAbaCirculo(9, this)"
-                >
-                  9
-                </button>
-              </div>
+          <div class="grimorio-espacos">
+            <div class="grimorio-espacos-topo">
+              <span>Espaços de magia</span>
+              <button type="button" class="pm-icone-btn" onclick="abrirGerenciarEspacos()" title="Configurar espaços"><i class="ti ti-settings"></i></button>
             </div>
-
-            <!-- ================= CÍRCULOS ================= -->
-
-            <div id="circulo-0" class="circulo-box active">
-              <div class="gasto-circulo-box">
-                <div class="topo-slots-circulo">
-                  <span>Círculo 0</span>
-                  <button
-                    class="btn-editar-slots"
-                    onclick="editarQuantidadeSlotsCirculo(0)"
-                  >
-                    ✏️
-                  </button>
-                </div>
-                <div id="slotsCirculo0" class="slots-circulo"></div>
-              </div>
-              <ul id="listaMagiasCirculo0" class="lista-sempre-visivel"></ul>
-            </div>
-
-            <div id="circulo-1" class="circulo-box" style="display: none">
-              <div class="gasto-circulo-box">
-                <div class="topo-slots-circulo">
-                  <span>Círculo 1</span>
-                  <button
-                    class="btn-editar-slots"
-                    onclick="editarQuantidadeSlotsCirculo(1)"
-                  >
-                    ✏️
-                  </button>
-                </div>
-                <div id="slotsCirculo1" class="slots-circulo"></div>
-              </div>
-              <ul id="listaMagiasCirculo1" class="lista-sempre-visivel"></ul>
-            </div>
-
-            <div id="circulo-2" class="circulo-box" style="display: none">
-              <div class="gasto-circulo-box">
-                <div class="topo-slots-circulo">
-                  <span>Círculo 2</span>
-                  <button
-                    class="btn-editar-slots"
-                    onclick="editarQuantidadeSlotsCirculo(2)"
-                  >
-                    ✏️
-                  </button>
-                </div>
-                <div id="slotsCirculo2" class="slots-circulo"></div>
-              </div>
-              <ul id="listaMagiasCirculo2" class="lista-sempre-visivel"></ul>
-            </div>
-
-            <div id="circulo-3" class="circulo-box" style="display: none">
-              <div class="gasto-circulo-box">
-                <div class="topo-slots-circulo">
-                  <span>Círculo 3</span>
-                  <button
-                    class="btn-editar-slots"
-                    onclick="editarQuantidadeSlotsCirculo(3)"
-                  >
-                    ✏️
-                  </button>
-                </div>
-                <div id="slotsCirculo3" class="slots-circulo"></div>
-              </div>
-              <ul id="listaMagiasCirculo3" class="lista-sempre-visivel"></ul>
-            </div>
-
-            <div id="circulo-4" class="circulo-box" style="display: none">
-              <div class="gasto-circulo-box">
-                <div class="topo-slots-circulo">
-                  <span>Círculo 4</span>
-                  <button
-                    class="btn-editar-slots"
-                    onclick="editarQuantidadeSlotsCirculo(4)"
-                  >
-                    ✏️
-                  </button>
-                </div>
-                <div id="slotsCirculo4" class="slots-circulo"></div>
-              </div>
-              <ul id="listaMagiasCirculo4" class="lista-sempre-visivel"></ul>
-            </div>
-
-            <div id="circulo-5" class="circulo-box" style="display: none">
-              <div class="gasto-circulo-box">
-                <div class="topo-slots-circulo">
-                  <span>Círculo 5</span>
-                  <button
-                    class="btn-editar-slots"
-                    onclick="editarQuantidadeSlotsCirculo(5)"
-                  >
-                    ✏️
-                  </button>
-                </div>
-                <div id="slotsCirculo5" class="slots-circulo"></div>
-              </div>
-              <ul id="listaMagiasCirculo5" class="lista-sempre-visivel"></ul>
-            </div>
-
-            <div id="circulo-6" class="circulo-box" style="display: none">
-              <div class="gasto-circulo-box">
-                <div class="topo-slots-circulo">
-                  <span>Círculo 6</span>
-                  <button
-                    class="btn-editar-slots"
-                    onclick="editarQuantidadeSlotsCirculo(6)"
-                  >
-                    ✏️
-                  </button>
-                </div>
-                <div id="slotsCirculo6" class="slots-circulo"></div>
-              </div>
-              <ul id="listaMagiasCirculo6" class="lista-sempre-visivel"></ul>
-            </div>
-
-            <div id="circulo-7" class="circulo-box" style="display: none">
-              <div class="gasto-circulo-box">
-                <div class="topo-slots-circulo">
-                  <span>Círculo 7</span>
-                  <button
-                    class="btn-editar-slots"
-                    onclick="editarQuantidadeSlotsCirculo(7)"
-                  >
-                    ✏️
-                  </button>
-                </div>
-                <div id="slotsCirculo7" class="slots-circulo"></div>
-              </div>
-              <ul id="listaMagiasCirculo7" class="lista-sempre-visivel"></ul>
-            </div>
-
-            <div id="circulo-8" class="circulo-box" style="display: none">
-              <div class="gasto-circulo-box">
-                <div class="topo-slots-circulo">
-                  <span>Círculo 8</span>
-                  <button
-                    class="btn-editar-slots"
-                    onclick="editarQuantidadeSlotsCirculo(8)"
-                  >
-                    ✏️
-                  </button>
-                </div>
-                <div id="slotsCirculo8" class="slots-circulo"></div>
-              </div>
-              <ul id="listaMagiasCirculo8" class="lista-sempre-visivel"></ul>
-            </div>
-
-            <div id="circulo-9" class="circulo-box" style="display: none">
-              <div class="gasto-circulo-box">
-                <div class="topo-slots-circulo">
-                  <span>Círculo 9</span>
-                  <button
-                    class="btn-editar-slots"
-                    onclick="editarQuantidadeSlotsCirculo(9)"
-                  >
-                    ✏️
-                  </button>
-                </div>
-                <div id="slotsCirculo9" class="slots-circulo"></div>
-              </div>
-              <ul id="listaMagiasCirculo9" class="lista-sempre-visivel"></ul>
-            </div>
+            <div id="painelEspacos"></div>
           </div>
+
+          <div id="seletorCirculos" class="seletor-circulos"></div>
+
+          <div class="pm-toolbar">
+            <button type="button" class="pm-chip-toggle" id="btnSoPreparadas" onclick="alternarSoPreparadas()"><i class="ti ti-bookmark"></i> Só preparadas</button>
+            <button type="button" class="pm-icone-btn" onclick="alternarModoCompacto()" title="Alternar lista compacta"><i class="ti ti-layout-list"></i></button>
+            <button type="button" class="pm-novo" onclick="abrirFormPoder(-1, String(window._circuloSelecionado))"><i class="ti ti-plus"></i> Nova magia</button>
+          </div>
+
+          <ul id="listaMagias" class="lista-sempre-visivel"></ul>
         </div>
       </div>
 
@@ -2591,19 +2270,17 @@
         <div class="estilo-conteudo">
           <h2 class="titulo-secao">Estilo</h2>
 
-          <div class="barra-estilo">
-            <div id="progressoEstilo"></div>
-          </div>
-
-          <p class="estilo-pontos-texto">
-            Pontos: <span id="pontosEstilo">0</span>/10
-          </p>
-
           <div class="habilidades-estilo-box">
             <h3 class="subtitulo-secao">Habilidades por Rank</h3>
             <div id="habilidadesEstilo" class="habilidades-estilo"></div>
           </div>
         </div>
+      </div>
+
+      <!-- ================= VEÍCULOS ================= -->
+      <div class="aba" id="veiculos" style="display: none">
+        <h2 class="titulo-secao">Veículos</h2>
+        <div id="veiculosConteudo"></div>
       </div>
     </div>
 
@@ -2709,12 +2386,18 @@
 
     <div id="btnSalvarFlutuante" style="position:fixed;top:20%;right:16px;z-index:99998;width:48px;height:48px;border-radius:50%;background:rgba(30,18,8,0.85);border:1px solid rgba(255,255,255,0.25);color:#fff;font-size:20px;box-shadow:0 4px 14px rgba(0,0,0,0.5);cursor:grab;display:flex;align-items:center;justify-content:center;touch-action:none;user-select:none;">💾</div>
 
-    <!-- HUD FLUTUANTE DO ESTILO -->
+    <!-- HUD FLUTUANTE DO ESTILO (barra, pontos, dano, tipo e rank) -->
     <div class="estilo-topo-fixo" style="display:none;">
       <div class="box-estilo">
-        <span>Dano: <span id="danoTotal">5</span></span>
-        <span>Tipo: <span id="tipoDano">Físico</span></span>
-        <span>Rank: <span id="rankEstilo">-</span></span>
+        <div class="box-estilo-linha">
+          <span>Dano: <span id="danoTotal">5</span></span>
+          <span>Tipo: <span id="tipoDano">Físico</span></span>
+          <span>Rank: <span id="rankEstilo">-</span></span>
+        </div>
+        <div class="barra-estilo">
+          <div id="progressoEstilo"></div>
+        </div>
+        <p class="estilo-pontos-texto">Pontos: <span id="pontosEstilo">0</span>/10</p>
       </div>
     </div>
 
@@ -2723,6 +2406,9 @@
       <button class="btn-estilo acerto" onclick="acertoEstilo()">✓</button>
       <button class="btn-estilo devil" onclick="devilEstilo()">⚡</button>
     </div>
+
+    <!-- dados: resultado -->
+    <div id="rolagemSheet" class="rolagem-sheet" style="display:none"></div>
 
     <div id="popup" class="popup" style="display: none">
       <div class="popup-content">
@@ -2776,7 +2462,11 @@
   where,
   updateDoc,
   arrayUnion,
-  onSnapshot
+  onSnapshot,
+  addDoc,
+  orderBy,
+  limit,
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 import {
@@ -2819,6 +2509,11 @@ import {
   window.where = where;
   window.collection = collection;
   window.getDocs = getDocs;
+  window.addDoc = addDoc;
+  window.orderBy = orderBy;
+  window.limit = limit;
+  window.writeBatch = writeBatch;
+  window.runTransaction = runTransaction;
 
   await setPersistence(auth, browserLocalPersistence);
 
@@ -3721,6 +3416,8 @@ window.criarGrupo = () => alertBonito("Em breve: criar grupo.");
     await carregarFichasDaNuvem();
     await carregarMonstrosDaNuvem();
     await carregarCampanhasMasterFirebase();
+    await carregarRacasCustomFirebase();
+    await migrarCompendioParaGlobal();
 
     setTimeout(() => {
       if (typeof window.carregarGruposParaCampanha === "function") window.carregarGruposParaCampanha();
