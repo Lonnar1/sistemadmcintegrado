@@ -3219,6 +3219,8 @@ function carregarPersonagem(index) {
   saves = p.saves || {};
   exaustao = p.exaustao ?? 0;
   concentracaoAtiva = p.concentracao || "";
+  abasOcultas = Array.isArray(p.abasOcultas) ? p.abasOcultas : [];
+  if (typeof aplicarAbasVisiveis === "function") setTimeout(aplicarAbasVisiveis, 0);
   pontosEstilo = p.pontosEstilo ?? 0;
   moedas = normalizarMoedas(p.moedas);
   migrarMoedasParaBolsa();
@@ -3310,6 +3312,7 @@ p.nivel = document.getElementById("nivel")?.value || "";
   p.exaustao = exaustao;
   p.morte = morte;
   p.concentracao = concentracaoAtiva || "";
+  p.abasOcultas = abasOcultas;
   p.pontosEstilo = pontosEstilo;
   p.moedas = normalizarMoedas(moedas);
   p.dominio = dominio;
@@ -15291,4 +15294,69 @@ function alternarBolsaForm(prefixo) {
     rec.checked = false;
     rec.dispatchEvent(new Event("change"));
   }
+}
+
+/* =====================================================================
+   ESCOLHER ABAS (engrenagem na aba Personagem)
+   Cada ficha guarda quais abas ficam escondidas (p.abasOcultas).
+   ===================================================================== */
+var NOMES_ABAS = {
+  personagem: ["👤", "Personagem"],
+  atributos: ["📊", "Atributos"],
+  combate: ["⚔️", "Combate"],
+  inventario: ["🎒", "Inventário"],
+  poderes: ["🔥", "Poderes e Magias"],
+  estilo: ["💀", "Estilo (Devil Trigger)"],
+  veiculos: ["🐴", "Veículos"],
+};
+var abasOcultas = [];
+
+function idAbaDoBotao(btn) {
+  const m = (btn.getAttribute("onclick") || "").match(/trocarAba\('(\w+)'/);
+  return m ? m[1] : null;
+}
+
+function aplicarAbasVisiveis() {
+  const ocultas = new Set(abasOcultas);
+  document.querySelectorAll("#ficha .tabs .tab-btn").forEach((btn) => {
+    const id = idAbaDoBotao(btn);
+    if (!id || id === "personagem") return;
+    btn.style.display = ocultas.has(id) ? "none" : "";
+  });
+  const atual = document.querySelector("#ficha .aba.active");
+  if (atual && ocultas.has(atual.id)) trocarAba("personagem");
+}
+
+function abrirConfigAbas() {
+  const ids = [...document.querySelectorAll("#ficha .tabs .tab-btn")].map(idAbaDoBotao).filter(Boolean);
+  const ocultas = new Set(abasOcultas);
+  const linhas = ids
+    .map((id) => {
+      const [ic, nome] = NOMES_ABAS[id] || ["•", id];
+      const fixa = id === "personagem";
+      return `
+      <div class="toggle-cargas cfg-aba ${fixa ? "fixa" : ""}">
+        <span class="toggle-cargas-texto"><span class="cfg-aba-ic">${ic}</span> ${nome}${fixa ? ` <small>(sempre aparece)</small>` : ""}</span>
+        <label class="switch-cargas">
+          <input type="checkbox" ${ocultas.has(id) ? "" : "checked"} ${fixa ? "disabled" : ""} onchange="alternarAbaVisivel('${id}', this.checked)">
+          <span class="slider-cargas"></span>
+        </label>
+      </div>`;
+    })
+    .join("");
+  abrirPopup(
+    "Abas da ficha",
+    `<div class="popup-form"><p class="pm-dica">Escolha quais abas aparecem na barra de baixo. Dá pra mudar quando quiser.</p>${linhas}</div>`,
+    true,
+    null,
+  );
+}
+
+function alternarAbaVisivel(id, visivel) {
+  const s = new Set(abasOcultas);
+  if (visivel) s.delete(id);
+  else s.add(id);
+  abasOcultas = [...s];
+  aplicarAbasVisiveis();
+  salvarTudo();
 }
