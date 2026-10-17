@@ -1275,7 +1275,7 @@ async function salvarEdicaoItem(index) {
     recipiente,
     dentroDe,
     bolsa,
-    moedas: bolsa ? normalizarMoedas(anterior.moedas) : anterior.moedas,
+    ...(bolsa ? { moedas: normalizarMoedas(anterior.moedas) } : {}),
     modificacoes: [...(window._modsTemp.editItem || [])],
   };
 
@@ -4373,7 +4373,7 @@ async function addItem() {
 
   const novoItem = {
     bolsa,
-    moedas: bolsa ? normalizarMoedas(editandoItem >= 0 ? inventario[editandoItem]?.moedas : {}) : undefined,
+    ...(bolsa ? { moedas: normalizarMoedas(editandoItem >= 0 ? inventario[editandoItem]?.moedas : {}) } : {}),
     modificacoes: consumirModsTemp("item"),
     id: editandoItem >= 0 ? (inventario[editandoItem]?.id || gerarIdItem()) : gerarIdItem(),
     nome,
